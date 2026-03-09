@@ -3,16 +3,17 @@
 
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase, useAuth } from '@/firebase';
 import { doc, collection, query, orderBy, limit } from 'firebase/firestore';
-import { UserProfile, WatchlistEntry } from '../lib/types';
+import { UserProfile, WatchlistEntry, SceneMemory } from '../lib/types';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Film, Star, Calendar, Sparkles, Loader2, Settings, History, LogOut, LogIn } from 'lucide-react';
+import { Film, Star, Calendar, Sparkles, Loader2, Settings, History, LogOut, LogIn, Video, Quote, StickyNote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import MovieCard from '@/components/movie-card';
 import Link from 'next/link';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 export default function ProfilePage() {
   const { user, isUserLoading } = useUser();
@@ -37,6 +38,17 @@ export default function ProfilePage() {
   }, [user, firestore]);
 
   const { data: recentWatched, isLoading: isHistoryLoading } = useCollection<WatchlistEntry>(historyRef);
+
+  const sceneMemoriesRef = useMemoFirebase(() => {
+    if (!user) return null;
+    return query(
+      collection(firestore, `users/${user.uid}/sceneMemories`),
+      orderBy("addedDate", "desc"),
+      limit(10)
+    );
+  }, [user, firestore]);
+
+  const { data: sceneMemories } = useCollection<SceneMemory>(sceneMemoriesRef);
 
   const handleSignOut = async () => {
     await signOut(auth);
@@ -143,26 +155,81 @@ export default function ProfilePage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Recent Activity */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-headline font-bold text-white flex items-center gap-3">
-              <History className="text-primary w-6 h-6" /> RECENTLY WATCHED
-            </h2>
-            <Link href="/watchlist">
-              <Button variant="ghost" className="text-white/50 hover:text-white">View History</Button>
-            </Link>
+        <div className="lg:col-span-2 space-y-12">
+          {/* Recent History */}
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-headline font-bold text-white flex items-center gap-3">
+                <History className="text-primary w-6 h-6" /> RECENTLY WATCHED
+              </h2>
+              <Link href="/watchlist">
+                <Button variant="ghost" className="text-white/50 hover:text-white">View History</Button>
+              </Link>
+            </div>
+            
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
+              {recentWatched && recentWatched.length > 0 ? (
+                recentWatched.map(entry => (
+                  <MovieCard key={entry.id} movie={entry.movieData} />
+                ))
+              ) : (
+                <div className="col-span-full h-40 glass border-white/5 rounded-2xl flex items-center justify-center text-white/30 italic">
+                  No recent activity.
+                </div>
+              )}
+            </div>
           </div>
-          
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
-            {recentWatched && recentWatched.length > 0 ? (
-              recentWatched.map(entry => (
-                <MovieCard key={entry.id} movie={entry.movieData} />
-              ))
-            ) : (
-              <div className="col-span-full h-40 glass border-white/5 rounded-2xl flex items-center justify-center text-white/30 italic">
-                No recent activity.
-              </div>
-            )}
+
+          {/* Scene Memories Feed */}
+          <div className="space-y-6">
+            <h2 className="text-2xl font-headline font-bold text-white flex items-center gap-3">
+              <Video className="text-primary w-6 h-6" /> SCENE MEMORIES
+            </h2>
+            <div className="grid grid-cols-1 gap-4">
+              {sceneMemories?.map(memory => (
+                <Card key={memory.id} className="glass border-white/5 overflow-hidden group hover:border-white/20 transition-all">
+                  <div className="flex flex-col md:flex-row">
+                    <div className="relative w-full md:w-32 aspect-[2/3] shrink-0">
+                       <Image src={memory.posterUrl} alt={memory.movieTitle} fill className="object-cover" />
+                    </div>
+                    <div className="p-6 flex-1 space-y-4">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="text-[10px] uppercase tracking-widest text-primary font-bold">{memory.movieTitle}</p>
+                          <div className="flex items-center gap-2 text-white/40 text-xs mt-1">
+                            <Clock className="w-3 h-3" />
+                            <span>Timestamp: {memory.timestamp}</span>
+                          </div>
+                        </div>
+                        <Badge variant="outline" className="text-[8px] opacity-30">
+                          {new Date(memory.addedDate).toLocaleDateString()}
+                        </Badge>
+                      </div>
+                      
+                      {memory.quote && (
+                        <div className="relative pl-6">
+                          <Quote className="absolute left-0 top-0 w-4 h-4 text-primary opacity-50" />
+                          <p className="text-lg font-headline italic text-white/90">"{memory.quote}"</p>
+                        </div>
+                      )}
+                      
+                      {memory.note && (
+                        <div className="flex gap-2 text-sm text-white/60 bg-white/5 p-4 rounded-xl border border-white/5 italic">
+                          <StickyNote className="w-4 h-4 shrink-0 mt-0.5 opacity-50" />
+                          <p>{memory.note}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              ))}
+              {sceneMemories?.length === 0 && (
+                 <div className="h-40 glass border-white/5 rounded-2xl flex flex-col items-center justify-center text-white/30 italic space-y-2">
+                  <Video className="w-8 h-8 opacity-20" />
+                  <p>No cinematic moments captured yet.</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

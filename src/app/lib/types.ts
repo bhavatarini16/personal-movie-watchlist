@@ -54,3 +54,15 @@ export interface Comment {
   text: string;
   commentDate: string;
 }
+
+export interface SceneMemory {
+  id: string;
+  userId: string;
+  movieId: string;
+  movieTitle: string;
+  posterUrl: string;
+  timestamp: string;
+  quote: string;
+  note: string;
+  addedDate: string;
+}
