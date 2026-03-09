@@ -16,6 +16,10 @@
             "type": { "type": "string" },
             "description": { "type": "string" }
           }
+        },
+        "friends": {
+          "type": "object",
+          "description": "A map of userId to boolean for fast access control checks."
         }
       },
       "required": ["id", "email", "username"]
@@ -30,8 +34,12 @@
         "movieData": { "type": "object" },
         "addedDate": { "type": "string", "format": "date-time" },
         "isWatched": { "type": "boolean" },
+        "watchDate": { "type": "string", "format": "date-time" },
         "personalRating": { "type": "number" },
-        "notes": { "type": "string" }
+        "notes": { "type": "string" },
+        "rewatchCount": { "type": "number" },
+        "isFavorite": { "type": "boolean" },
+        "remindMe": { "type": "boolean" }
       },
       "required": ["userId", "movieId", "isWatched"]
     },
@@ -42,10 +50,14 @@
       "properties": {
         "userId": { "type": "string" },
         "movieId": { "type": "string" },
+        "movieTitle": { "type": "string" },
+        "posterUrl": { "type": "string" },
         "timestamp": { "type": "string" },
         "quote": { "type": "string" },
-        "note": { "type": "string" }
-      }
+        "note": { "type": "string" },
+        "addedDate": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "movieId", "timestamp"]
     }
   },
   "auth": {
@@ -56,13 +68,17 @@
       "schema": { "$ref": "#/backend/entities/UserProfile" },
       "description": "Core user profiles."
     },
-    "/users/{userId}/watchlist/{watchlistItemId}": {
+    "/users/{userId}/watchlist/{itemId}": {
       "schema": { "$ref": "#/backend/entities/WatchlistEntry" },
-      "description": "Individual movie entries for a specific user."
+      "description": "User's personal movie tracking queue."
     },
     "/users/{userId}/sceneMemories/{memoryId}": {
       "schema": { "$ref": "#/backend/entities/SceneMemory" },
-      "description": "User's personal cinematic notes."
+      "description": "User's personal cinematic notes and highlights."
+    },
+    "/users/{userId}/notifications/{notifId}": {
+      "schema": "object",
+      "description": "User's activity alerts and invitations."
     },
     "/watchParties/{partyId}": {
       "schema": "object",
@@ -70,7 +86,7 @@
     },
     "/comments/{commentId}": {
       "schema": "object",
-      "description": "Global movie comments."
+      "description": "Global movie discussion comments."
     }
   }
 }
