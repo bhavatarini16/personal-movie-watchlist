@@ -34,6 +34,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import Link from 'next/link';
 
 export default function WatchPartyDetailsPage() {
   const params = useParams();
@@ -419,9 +420,11 @@ export default function WatchPartyDetailsPage() {
                  <div className="absolute bottom-6 left-6 right-6 space-y-2">
                     <Badge className="bg-primary text-white font-bold uppercase tracking-widest text-[10px]">FIXED FEATURE</Badge>
                     <h3 className="text-3xl font-headline font-bold text-white tracking-tighter uppercase">{party.selectedMovieTitle}</h3>
-                    <Button className="w-full bg-white text-black hover:bg-white/90 h-12 font-bold uppercase tracking-widest">
-                      <Play className="w-4 h-4 mr-2 fill-black" /> Watch Together
-                    </Button>
+                    <Link href={`/watch-parties/${partyId}/room`}>
+                      <Button className="w-full bg-white text-black hover:bg-white/90 h-12 font-bold uppercase tracking-widest">
+                        <Play className="w-4 h-4 mr-2 fill-black" /> Watch Together
+                      </Button>
+                    </Link>
                  </div>
                </div>
             </Card>
