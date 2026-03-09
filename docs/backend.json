@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "UserProfile": {
@@ -83,6 +84,14 @@
     "/watchParties/{partyId}": {
       "schema": "object",
       "description": "Collaborative watch party rooms."
+    },
+    "/watchParties/{partyId}/members/{memberId}": {
+      "schema": "object",
+      "description": "Participants in a specific watch party."
+    },
+    "/watchParties/{partyId}/nominations/{nominationId}": {
+      "schema": "object",
+      "description": "Movie suggestions and votes within a watch party."
     },
     "/comments/{commentId}": {
       "schema": "object",
