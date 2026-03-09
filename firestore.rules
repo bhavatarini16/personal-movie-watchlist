@@ -3,17 +3,6 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /**
-     * MOVIE WATCHLIST APP SECURITY RULES
-     * 
-     * Core Philosophy:
-     * This ruleset enforces a strict user-ownership model for personal data (profiles, watchlists) 
-     * while enabling social features through a "Friends" access model. Public movie data is 
-     * globally readable by authenticated users but strictly read-only from the client.
-     */
-
-    // --- Helper Functions ---
-
     function isSignedIn() {
       return request.auth != null;
     }
@@ -27,31 +16,20 @@ service cloud.firestore {
     }
 
     function isFriendOf(targetUserId) {
-      // Robust check for friend status that handles missing documents or fields safely
       let userPath = /databases/$(database)/documents/users/$(targetUserId);
       return isSignedIn() && 
              exists(userPath) &&
              request.auth.uid in get(userPath).data.get('friends', {});
     }
 
-    function isDataOwner(fieldName) {
-      return isSignedIn() && request.resource.data[fieldName] == request.auth.uid;
-    }
-
-    function isExistingDataOwner(fieldName) {
-      return resource != null && isSignedIn() && resource.data[fieldName] == request.auth.uid;
-    }
-
     // --- Collection Rules ---
 
-    // Top-level users match
     match /users/{userId} {
       allow get, list: if isOwner(userId) || isFriendOf(userId);
       allow create: if isOwner(userId); 
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
 
-      // Explicitly allow subcollections for the owner and their friends
       match /watchlist/{watchlistEntryId} {
         allow read: if isOwner(userId) || isFriendOf(userId);
         allow create: if isOwner(userId) && request.resource.data.userId == userId;
@@ -67,13 +45,38 @@ service cloud.firestore {
       }
     }
 
-    // Movies are read-only for all signed-in users
+    match /watchParties/{partyId} {
+      // Helper for party members
+      function isPartyMember() {
+        return exists(/databases/$(database)/documents/watchParties/$(partyId)/members/$(request.auth.uid));
+      }
+      
+      function isHost() {
+        return resource != null && resource.data.hostId == request.auth.uid;
+      }
+
+      allow list, get: if isSignedIn(); // Allow discovery for joining
+      allow create: if isSignedIn() && request.resource.data.hostId == request.auth.uid;
+      allow update: if isHost() || (isPartyMember() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'selectedMovieId', 'selectedMovieTitle', 'selectedMoviePoster']));
+      allow delete: if isHost();
+
+      match /members/{memberId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn() && memberId == request.auth.uid;
+        allow delete: if isSignedIn() && (memberId == request.auth.uid || isHost());
+      }
+
+      match /nominations/{nominationId} {
+        allow read: if isSignedIn();
+        allow create, update, delete: if isPartyMember();
+      }
+    }
+
     match /movies/{movieId} {
       allow read: if isSignedIn();
       allow write: if false;
     }
 
-    // Social comments are readable by any authenticated user
     match /comments/{commentId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
@@ -81,11 +84,7 @@ service cloud.firestore {
       allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
-    // Other metadata collections
     match /genres/{genreId} {
-      allow read: if isSignedIn();
-    }
-    match /moviePersonalityTypes/{typeId} {
       allow read: if isSignedIn();
     }
   }

@@ -66,3 +66,34 @@ export interface SceneMemory {
   note: string;
   addedDate: string;
 }
+
+export interface WatchParty {
+  id: string;
+  hostId: string;
+  hostName: string;
+  title: string;
+  description: string;
+  scheduledAt: string;
+  status: 'draft' | 'voting' | 'ready' | 'finished';
+  selectedMovieId?: string;
+  selectedMovieTitle?: string;
+  selectedMoviePoster?: string;
+}
+
+export interface WatchPartyNomination {
+  id: string;
+  movieId: string;
+  movieTitle: string;
+  posterUrl: string;
+  nominatorId: string;
+  nominatorName: string;
+  votes: Record<string, boolean>; // userId -> true
+}
+
+export interface WatchPartyMember {
+  id: string;
+  userId: string;
+  username: string;
+  avatarUrl: string;
+  joinedAt: string;
+}

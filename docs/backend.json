@@ -181,6 +181,46 @@
         "timestamp",
         "addedDate"
       ]
+    },
+    "WatchParty": {
+      "title": "WatchParty",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "hostId": { "type": "string" },
+        "hostName": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "scheduledAt": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["draft", "voting", "ready", "finished"] },
+        "selectedMovieId": { "type": "string" },
+        "selectedMovieTitle": { "type": "string" },
+        "selectedMoviePoster": { "type": "string" }
+      }
+    },
+    "WatchPartyNomination": {
+      "title": "WatchPartyNomination",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "movieId": { "type": "string" },
+        "movieTitle": { "type": "string" },
+        "posterUrl": { "type": "string" },
+        "nominatorId": { "type": "string" },
+        "nominatorName": { "type": "string" },
+        "votes": { "type": "object", "description": "Map of userId to boolean for voting" }
+      }
+    },
+    "WatchPartyMember": {
+      "title": "WatchPartyMember",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "UserId as DocId" },
+        "userId": { "type": "string" },
+        "username": { "type": "string" },
+        "avatarUrl": { "type": "string" },
+        "joinedAt": { "type": "string", "format": "date-time" }
+      }
     }
   },
   "auth": {
@@ -219,6 +259,36 @@
             "$ref": "#/backend/entities/SceneMemory"
           },
           "description": "Stores a user's specific scene memories for various movies."
+        }
+      },
+      {
+        "path": "/watchParties/{partyId}",
+        "definition": {
+          "entityName": "WatchParty",
+          "schema": {
+            "$ref": "#/backend/entities/WatchParty"
+          },
+          "description": "Root watch party details"
+        }
+      },
+      {
+        "path": "/watchParties/{partyId}/nominations/{nominationId}",
+        "definition": {
+          "entityName": "WatchPartyNomination",
+          "schema": {
+            "$ref": "#/backend/entities/WatchPartyNomination"
+          },
+          "description": "Movies nominated for a watch party"
+        }
+      },
+      {
+        "path": "/watchParties/{partyId}/members/{memberId}",
+        "definition": {
+          "entityName": "WatchPartyMember",
+          "schema": {
+            "$ref": "#/backend/entities/WatchPartyMember"
+          },
+          "description": "Members of a watch party"
         }
       }
     ]
