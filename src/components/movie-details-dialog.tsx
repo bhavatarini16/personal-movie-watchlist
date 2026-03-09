@@ -32,26 +32,27 @@ export default function MovieDetailsDialog({ movie, isOpen, onClose }: MovieDeta
   const [commentText, setCommentText] = useState("");
 
   const watchlistRef = useMemoFirebase(() => {
-    if (!user || !movie || !firestore) return null;
+    if (!user || !movie || !firestore || !isOpen) return null;
     return query(
       collection(firestore, `users/${user.uid}/watchlist`),
       where("movieId", "==", movie.tmdbId)
     );
-  }, [user?.uid, movie?.tmdbId, firestore]);
+  }, [user?.uid, movie?.tmdbId, firestore, isOpen]);
 
   const { data: watchlistEntries } = useCollection<WatchlistEntry>(watchlistRef);
   const entry = watchlistEntries?.[0];
 
   const commentsRef = useMemoFirebase(() => {
-    // CRITICAL: Only attempt to fetch comments if a user is fully signed in and the movie is valid
-    if (!movie?.tmdbId || !user?.uid || !firestore) return null;
+    // CRITICAL: Only attempt to fetch comments if the dialog is OPEN, the movie is valid, and a user is signed in
+    if (!isOpen || !movie?.tmdbId || !user?.uid || !firestore) return null;
     return query(
       collection(firestore, `comments`),
       where("watchlistEntryId", "==", movie.tmdbId),
-      orderBy("commentDate", "desc"),
+      // Temporarily removing orderBy to avoid composite index requirements during development
+      // orderBy("commentDate", "desc"),
       limit(20)
     );
-  }, [movie?.tmdbId, user?.uid, firestore]);
+  }, [isOpen, movie?.tmdbId, user?.uid, firestore]);
 
   const { data: comments, isLoading: isCommentsLoading } = useCollection<Comment>(commentsRef);
 
