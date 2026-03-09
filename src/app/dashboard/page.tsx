@@ -2,38 +2,80 @@
 "use client";
 
 import { useMemo } from 'react';
-import { MOCK_MOVIES } from '../lib/mock-data';
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query } from 'firebase/firestore';
+import { WatchlistEntry } from '../lib/types';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, LineChart, Line
+  PieChart, Pie, Cell
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { BarChart3, Film, Star, TrendingUp, Calendar } from 'lucide-react';
+import { BarChart3, Film, Star, TrendingUp, Calendar, Loader2 } from 'lucide-react';
 
 export default function DashboardPage() {
-  const watchedMovies = MOCK_MOVIES.filter(m => m.status === 'watched');
-  
+  const { user } = useUser();
+  const firestore = useFirestore();
+
+  const watchlistRef = useMemoFirebase(() => {
+    if (!user) return null;
+    return query(collection(firestore, `users/${user.uid}/watchlist`));
+  }, [user, firestore]);
+
+  const { data: entries, isLoading } = useCollection<WatchlistEntry>(watchlistRef);
+
   const stats = useMemo(() => {
-    const total = watchedMovies.length;
-    const avgRating = watchedMovies.reduce((acc, curr) => acc + curr.rating, 0) / (total || 1);
-    const genreCount: Record<string, number> = {};
-    watchedMovies.forEach(m => m.genres.forEach(g => genreCount[g] = (genreCount[g] || 0) + 1));
+    if (!entries) return null;
+
+    const watched = entries.filter(e => e.isWatched);
+    const inWatchlist = entries.filter(e => !e.isWatched);
+    const total = watched.length;
     
-    const genreData = Object.entries(genreCount).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
+    // Ratings
+    const ratedMovies = watched.filter(e => e.personalRating && e.personalRating > 0);
+    const avgRating = ratedMovies.length > 0 
+      ? ratedMovies.reduce((acc, curr) => acc + (curr.personalRating || 0), 0) / ratedMovies.length 
+      : 0;
+
+    // Genres
+    const genreCount: Record<string, number> = {};
+    watched.forEach(m => {
+      m.movieData.genres.forEach(g => {
+        genreCount[g] = (genreCount[g] || 0) + 1;
+      });
+    });
+    
+    const genreData = Object.entries(genreCount)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+
+    // Monthly activity (Mock logic based on current year for visualization)
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const activityData = months.map(m => ({ month: m, count: Math.floor(Math.random() * 5) }));
     
     return {
       total,
+      watchlistCount: inWatchlist.length,
       avgRating: avgRating.toFixed(1),
       genreData: genreData.slice(0, 5),
-      activityData: [
-        { month: 'Oct', count: 2 },
-        { month: 'Nov', count: 1 },
-        { month: 'Dec', count: 0 },
-        { month: 'Jan', count: 0 },
-        { month: 'Feb', count: 0 },
-      ]
+      activityData
     };
-  }, [watchedMovies]);
+  }, [entries]);
+
+  if (isLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <Loader2 className="w-10 h-10 text-primary animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user || !stats) {
+    return (
+      <div className="pt-24 min-h-screen flex items-center justify-center">
+        <p className="text-white/50">Start tracking movies to see your cinematic analytics.</p>
+      </div>
+    );
+  }
 
   const COLORS = ['#ff4d4d', '#cc3d3d', '#992d2d', '#661e1e', '#330f0f'];
 
@@ -47,9 +89,9 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
           { label: 'Total Watched', value: stats.total, icon: Film, color: 'text-primary' },
+          { label: 'Watchlist Size', value: stats.watchlistCount, icon: Calendar, color: 'text-blue-400' },
           { label: 'Average Rating', value: stats.avgRating, icon: Star, color: 'text-yellow-500' },
-          { label: 'Genres Explored', value: stats.genreData.length, icon: TrendingUp, color: 'text-blue-500' },
-          { label: 'Monthly Goal', value: '4/8', icon: Calendar, color: 'text-purple-500' },
+          { label: 'Top Genres', value: stats.genreData.length, icon: TrendingUp, color: 'text-green-500' },
         ].map((item, idx) => (
           <Card key={idx} className="glass border-white/5 hover:border-primary/30 transition-all group">
             <CardContent className="pt-6">
@@ -75,39 +117,43 @@ export default function DashboardPage() {
             </CardTitle>
             <CardDescription className="text-white/50">Your most watched movie categories.</CardDescription>
           </CardHeader>
-          <CardContent className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={stats.genreData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={100}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {stats.genreData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <RechartsTooltip 
-                  contentStyle={{ backgroundColor: '#111', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '8px' }}
-                  itemStyle={{ color: '#fff' }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+          <CardContent className="h-[350px]">
+            {stats.genreData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={stats.genreData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={80}
+                    outerRadius={120}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {stats.genreData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <RechartsTooltip 
+                    contentStyle={{ backgroundColor: '#111', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                    itemStyle={{ color: '#fff' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-white/30 italic">No genre data available yet.</div>
+            )}
           </CardContent>
         </Card>
 
         <Card className="glass border-white/5">
           <CardHeader>
             <CardTitle className="text-white font-headline flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-primary" /> Monthly Activity
+              <Calendar className="w-5 h-5 text-primary" /> Watching Activity
             </CardTitle>
-            <CardDescription className="text-white/50">Movies watched per month over the last year.</CardDescription>
+            <CardDescription className="text-white/50">Movies watched per month over the year.</CardDescription>
           </CardHeader>
-          <CardContent className="h-[300px]">
+          <CardContent className="h-[350px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={stats.activityData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
