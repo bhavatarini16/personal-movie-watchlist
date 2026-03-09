@@ -65,6 +65,11 @@ export default function Home() {
     });
   }, [movies, selectedGenre, minRating, releaseStatus]);
 
+  const upcomingMovies = useMemo(() => {
+    const now = new Date();
+    return movies.filter(m => new Date(m.releaseDate) > now).slice(0, 5);
+  }, [movies]);
+
   return (
     <div className="pt-16 min-h-screen">
       {/* Hero Section */}
@@ -205,6 +210,33 @@ export default function Home() {
               )}
             </div>
           )}
+        </div>
+      </section>
+
+      {/* Upcoming Releases Section */}
+      <section className="bg-white/5 border-y border-white/5 py-24">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 space-y-12">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-blue-500/10 rounded-2xl border border-blue-500/20">
+              <Bell className="text-blue-400 w-8 h-8" />
+            </div>
+            <div>
+              <h2 className="text-4xl font-headline font-bold text-white tracking-tight">UPCOMING PREMIERES</h2>
+              <p className="text-white/40 text-sm font-bold uppercase tracking-widest">Mark your calendars for these releases</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
+            {upcomingMovies.map((movie) => (
+              <MovieCard 
+                key={movie.id} 
+                movie={movie} 
+              />
+            ))}
+            {upcomingMovies.length === 0 && (
+              <p className="text-white/20 italic font-headline col-span-full py-12 text-center">No upcoming releases found in the archives.</p>
+            )}
+          </div>
         </div>
       </section>
 
