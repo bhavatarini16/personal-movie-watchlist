@@ -1,427 +1,76 @@
 {
   "entities": {
     "UserProfile": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "UserProfile",
       "type": "object",
-      "description": "Represents a user's profile in the CineTrack application, storing personal preferences and activity metadata.",
+      "description": "Represents a user's profile in the CineTrack application.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the UserProfile entity."
-        },
-        "email": {
-          "type": "string",
-          "description": "The user's unique email address.",
-          "format": "email"
-        },
-        "username": {
-          "type": "string",
-          "description": "The user's chosen display name."
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "Timestamp when the user profile was created.",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "description": "Timestamp when the user profile was last updated.",
-          "format": "date-time"
-        },
-        "personalityTypeId": {
-          "type": "string",
-          "description": "Reference to the CinemaPersonalityType assigned to the user. (Relationship: CinemaPersonalityType 1:N UserProfile)"
-        }
-      },
-      "required": [
-        "id",
-        "email",
-        "username",
-        "createdAt"
-      ]
-    },
-    "Movie": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Movie",
-      "type": "object",
-      "description": "Stores details about a movie, typically fetched from a third-party API like TMDB.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Movie entity, often corresponding to an external API's movie ID."
-        },
-        "title": {
-          "type": "string",
-          "description": "The title of the movie."
-        },
-        "overview": {
-          "type": "string",
-          "description": "A brief summary or plot description of the movie."
-        },
-        "releaseDate": {
-          "type": "string",
-          "description": "The theatrical release date of the movie.",
-          "format": "date"
-        },
-        "posterPath": {
-          "type": "string",
-          "description": "Relative path or URL to the movie's poster image.",
-          "format": "uri"
-        },
-        "backdropPath": {
-          "type": "string",
-          "description": "Relative path or URL to the movie's backdrop image.",
-          "format": "uri"
-        },
-        "voteAverage": {
-          "type": "number",
-          "description": "The average rating of the movie from external sources (e.g., TMDB)."
-        },
-        "voteCount": {
-          "type": "number",
-          "description": "The total number of votes received for the movie from external sources."
-        },
-        "genreIds": {
-          "type": "array",
-          "description": "References to Genre entities associated with this movie. (Relationship: Genre N:N Movie)",
-          "items": {
-            "type": "string"
-          }
-        },
-        "trailerUrls": {
-          "type": "array",
-          "description": "URLs to movie trailers, typically from platforms like YouTube.",
-          "items": {
-            "type": "string"
-          }
-        },
-        "actorIds": {
-          "type": "array",
-          "description": "References to Actor entities who are part of the main cast for this movie. (Relationship: Actor N:N Movie)",
-          "items": {
-            "type": "string"
+        "id": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "username": { "type": "string" },
+        "avatarUrl": { "type": "string" },
+        "dateJoined": { "type": "string", "format": "date-time" },
+        "personality": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string" },
+            "description": { "type": "string" }
           }
         }
       },
-      "required": [
-        "id",
-        "title",
-        "overview",
-        "releaseDate",
-        "posterPath",
-        "voteAverage",
-        "voteCount",
-        "genreIds"
-      ]
+      "required": ["id", "email", "username"]
     },
-    "Genre": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Genre",
+    "WatchlistEntry": {
+      "title": "WatchlistEntry",
       "type": "object",
-      "description": "Represents a movie genre, typically synchronized with an external API's genre list.",
+      "description": "A movie entry in a user's watchlist.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Genre entity, often corresponding to an external API's genre ID."
-        },
-        "name": {
-          "type": "string",
-          "description": "The name of the genre (e.g., 'Action', 'Sci-Fi')."
-        }
+        "userId": { "type": "string" },
+        "movieId": { "type": "string" },
+        "movieData": { "type": "object" },
+        "addedDate": { "type": "string", "format": "date-time" },
+        "isWatched": { "type": "boolean" },
+        "personalRating": { "type": "number" },
+        "notes": { "type": "string" }
       },
-      "required": [
-        "id",
-        "name"
-      ]
+      "required": ["userId", "movieId", "isWatched"]
     },
-    "Actor": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Actor",
+    "SceneMemory": {
+      "title": "SceneMemory",
       "type": "object",
-      "description": "Stores details about an actor, typically fetched from a third-party API like TMDB.",
+      "description": "A specific cinematic moment captured by a user.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Actor entity, often corresponding to an external API's actor ID."
-        },
-        "name": {
-          "type": "string",
-          "description": "The full name of the actor."
-        },
-        "profilePath": {
-          "type": "string",
-          "description": "Relative path or URL to the actor's profile image.",
-          "format": "uri"
-        }
-      },
-      "required": [
-        "id",
-        "name"
-      ]
-    },
-    "WatchlistItem": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "WatchlistItem",
-      "type": "object",
-      "description": "Represents a user's interaction with a specific movie, including watchlist status, watched status, ratings, and notes.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the WatchlistItem entity."
-        },
-        "userId": {
-          "type": "string",
-          "description": "Reference to the UserProfile who owns this watchlist item. (Relationship: UserProfile 1:N WatchlistItem)"
-        },
-        "movieId": {
-          "type": "string",
-          "description": "Reference to the Movie associated with this watchlist item. (Relationship: Movie 1:N WatchlistItem)"
-        },
-        "isOnWatchlist": {
-          "type": "boolean",
-          "description": "Indicates if the movie is currently on the user's watchlist."
-        },
-        "isWatched": {
-          "type": "boolean",
-          "description": "Indicates if the user has marked this movie as watched."
-        },
-        "personalRating": {
-          "type": "number",
-          "description": "The user's personal rating for the movie (e.g., 1-10)."
-        },
-        "personalNotes": {
-          "type": "string",
-          "description": "Personal notes or thoughts added by the user about the movie."
-        },
-        "addedAt": {
-          "type": "string",
-          "description": "Timestamp when the movie was added to the watchlist or marked as watched.",
-          "format": "date-time"
-        },
-        "watchedAt": {
-          "type": "string",
-          "description": "Timestamp when the movie was marked as watched. Null if not yet watched.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "userId",
-        "movieId",
-        "isOnWatchlist",
-        "isWatched",
-        "addedAt"
-      ]
-    },
-    "CinemaPersonalityType": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "CinemaPersonalityType",
-      "type": "object",
-      "description": "Defines a cinema personality type, assigned to users based on quiz results.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the CinemaPersonalityType entity."
-        },
-        "name": {
-          "type": "string",
-          "description": "The name of the cinema personality type (e.g., 'Action Addict', 'Sci-Fi Thinker')."
-        },
-        "description": {
-          "type": "string",
-          "description": "A detailed description of this personality type."
-        }
-      },
-      "required": [
-        "id",
-        "name",
-        "description"
-      ]
-    },
-    "Friendship": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Friendship",
-      "type": "object",
-      "description": "Represents a friendship connection between two users in the application.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Friendship entity."
-        },
-        "user1Id": {
-          "type": "string",
-          "description": "Reference to the first UserProfile in the friendship. To avoid duplicate entries, always store the user ID that comes first lexicographically (or by a consistent sort order). (Relationship: UserProfile N:N UserProfile)"
-        },
-        "user2Id": {
-          "type": "string",
-          "description": "Reference to the second UserProfile in the friendship. (Relationship: UserProfile N:N UserProfile)"
-        },
-        "status": {
-          "type": "string",
-          "description": "The current status of the friendship request (e.g., 'pending', 'accepted', 'rejected', 'blocked')."
-        },
-        "requestedAt": {
-          "type": "string",
-          "description": "Timestamp when the friendship request was initiated.",
-          "format": "date-time"
-        },
-        "respondedAt": {
-          "type": "string",
-          "description": "Timestamp when the friendship request was accepted, rejected, or blocked. Null if pending.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "user1Id",
-        "user2Id",
-        "status",
-        "requestedAt"
-      ]
+        "userId": { "type": "string" },
+        "movieId": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "quote": { "type": "string" },
+        "note": { "type": "string" }
+      }
     }
   },
   "auth": {
-    "providers": [
-      "password",
-      "anonymous"
-    ]
+    "providers": ["password", "anonymous"]
   },
   "firestore": {
-    "structure": [
-      {
-        "path": "/users/{userId}",
-        "definition": {
-          "entityName": "UserProfile",
-          "schema": {
-            "$ref": "#/backend/entities/UserProfile"
-          },
-          "description": "Stores individual user profiles. The document ID `{userId}` corresponds directly to Firebase Authentication's UID, providing path-based ownership for secure access. Includes denormalized 'personalityTypeId' for direct reference.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique ID of the user, matching Firebase Authentication's UID."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/watchlistItems/{watchlistItemId}",
-        "definition": {
-          "entityName": "WatchlistItem",
-          "schema": {
-            "$ref": "#/backend/entities/WatchlistItem"
-          },
-          "description": "Stores a user's specific interactions with movies (watchlist status, watched, rating, notes). The parent path `{userId}` and the denormalized 'userId' field within the document ensure robust path-based ownership and authorization independence.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique ID of the user, matching Firebase Authentication's UID, who owns this watchlist item."
-            },
-            {
-              "name": "watchlistItemId",
-              "description": "The unique ID for this specific watchlist item."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/movies/{movieId}",
-        "definition": {
-          "entityName": "Movie",
-          "schema": {
-            "$ref": "#/backend/entities/Movie"
-          },
-          "description": "Stores comprehensive details about movies. This data is publicly readable and managed by administrators or backend processes. Contains 'genreIds' and 'actorIds' for direct lookup to related entities.",
-          "params": [
-            {
-              "name": "movieId",
-              "description": "The unique ID for the movie, often an external API's movie ID."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/genres/{genreId}",
-        "definition": {
-          "entityName": "Genre",
-          "schema": {
-            "$ref": "#/backend/entities/Genre"
-          },
-          "description": "Stores definitions of movie genres. This data is publicly readable and managed by administrators or backend processes.",
-          "params": [
-            {
-              "name": "genreId",
-              "description": "The unique ID for the genre, often an external API's genre ID."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/actors/{actorId}",
-        "definition": {
-          "entityName": "Actor",
-          "schema": {
-            "$ref": "#/backend/entities/Actor"
-          },
-          "description": "Stores details about actors. This data is publicly readable and managed by administrators or backend processes.",
-          "params": [
-            {
-              "name": "actorId",
-              "description": "The unique ID for the actor, often an external API's actor ID."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/cinemaPersonalityTypes/{typeId}",
-        "definition": {
-          "entityName": "CinemaPersonalityType",
-          "schema": {
-            "$ref": "#/backend/entities/CinemaPersonalityType"
-          },
-          "description": "Stores definitions of cinema personality types assigned to users. This data is publicly readable and managed by administrators or backend processes.",
-          "params": [
-            {
-              "name": "typeId",
-              "description": "The unique ID for the cinema personality type."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/friendships/{friendshipId}",
-        "definition": {
-          "entityName": "Friendship",
-          "schema": {
-            "$ref": "#/backend/entities/Friendship"
-          },
-          "description": "Manages friendship connections between two users. Documents explicitly include 'user1Id' and 'user2Id' fields for authorization independence, allowing security rules to check membership without fetching other documents.",
-          "params": [
-            {
-              "name": "friendshipId",
-              "description": "The unique ID for the friendship relationship."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/roles_admin/{userId}",
-        "definition": {
-          "entityName": "AdminRole",
-          "schema": {
-            "$ref": "#/backend/entities/UserProfile"
-          },
-          "description": "A dedicated collection for Database Access Control. The mere existence of a document at `/roles_admin/{userId}` grants administrative privileges to the associated user, enabling DBAC without custom claims.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique ID of the user who has administrative privileges."
-            }
-          ]
-        }
-      }
-    ],
-    "reasoning": "The recommended Firestore data structure for CineTrack prioritizes security, scalability, and debuggability by adhering to the core design principles and mandates. The structure leverages Firestore's hierarchical nature to enforce ownership and employs strategic denormalization to ensure Authorization Independence and support Query-Ability Security Rules (QAPs).\n\n**Justification of Design Principles:**\n\n1.  **Authorization Independence (CRITICAL):**\n    *   For `UserProfile` and `WatchlistItem` entities, authorization is achieved primarily through **path-based ownership**. User profiles are stored at `/users/{userId}`, where `{userId}` directly corresponds to `request.auth.uid`. `WatchlistItem` documents are nested under `/users/{userId}/watchlistItems/{watchlistItemId}`, ensuring that the owning user's ID is part of the path. This eliminates the need for `get()` calls to a parent document to determine ownership, allowing for atomic operations and simplified security rules.\n    *   For `Friendship` entities, which represent a many-to-many relationship, authorization is denormalized directly into the document. Each `friendship` document at `/friendships/{friendshipId}` explicitly contains `user1Id` and `user2Id`. Security rules will check `request.auth.uid` directly against these fields, preventing any hierarchical dependencies.\n    *   Publicly accessible data (`Movie`, `Genre`, `Actor`, `CinemaPersonalityType`) inherently requires no authorization dependency on user data.\n\n2.  **Clarity of Intent (Debuggability):**\n    *   The use of descriptive collection names (e.g., `/users`, `/watchlistItems`, `/friendships`) and semantic wildcards (e.g., `{userId}`, `{movieId}`, `{friendshipId}`) makes the data's purpose and ownership explicit. Security rules written against this structure will be straightforward and easy to understand, directly reflecting the authorization intent (e.g., `match /users/{userId} { allow read, write: if request.auth.uid == userId; }`).\n\n3.  **DBAC (No Custom Claims):**\n    *   Roles for administrative privileges (e.g., for managing `Movie`, `Genre`, `Actor`, `CinemaPersonalityType` data) are implemented via a dedicated collection: `/roles_admin/{userId}`. The mere existence of a document at this path for a given `userId` grants admin status. This allows security rules to check for admin roles using `exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid))`, entirely avoiding custom claims.\n\n4.  **QAPs (Rules are not Filters):**\n    *   **User-owned data:** `WatchlistItem` documents, being subcollections of `/users/{userId}`, inherently satisfy QAPs for `list` operations. A `list` query against `/users/{userId}/watchlistItems` is naturally scoped to the authenticated user's data, as enforced by the `userId` in the path. This prevents users from listing other users' watchlist items.\n    *   **Public data:** Collections like `/movies`, `/genres`, `/actors`, and `/cinemaPersonalityTypes` are designed for global public read access. Therefore, `list` operations are permitted without specific filters, as all documents in these collections share the same security posture.\n    *   **Collaborative data (Friendship):** For `Friendship` documents at `/friendships/{friendshipId}`, the `list` operation requires careful handling to maintain QAPs. Security rules will enforce that any `list` query must include a `where` clause filtering on either `user1Id` or `user2Id`, and that the value of that filter must match `request.auth.uid`. This means clients will need to perform two queries (one filtering by `user1Id` and one by `user2Id`) and merge the results, but it securely prevents a user from listing all friendships in the database.\n\n5.  **Invariants:** The structure explicitly includes fields like `createdAt`, `updatedAt`, `addedAt`, `watchedAt`, `requestedAt`, `respondedAt` for timestamp management, and clear ownership fields (`userId`, `user1Id`, `user2Id`) to support the integrity of these invariants through security rules.\n\n**Denormalization Strategy for Authorization Independence:**\n\n*   **`WatchlistItem`:** Each document in `/users/{userId}/watchlistItems/{watchlistItemId}` includes a `userId` field. While the `userId` is present in the document's path, including it within the document itself creates a self-contained authorization context, simplifying rules to `request.auth.uid == resource.data.userId` and protecting against potential path manipulation. This allows for atomic writes without fetching the parent `/users/{userId}` document.\n*   **`Friendship`:** Each document in `/friendships/{friendshipId}` explicitly contains `user1Id` and `user2Id`. This is critical for authorization independence, as it allows security rules to determine if the `request.auth.uid` is involved in the friendship directly from the `friendship` document itself, without needing to retrieve any other user profiles or parent documents. This also facilitates QAPs for listing, as described above."
+    "/users/{userId}": {
+      "schema": { "$ref": "#/backend/entities/UserProfile" },
+      "description": "Core user profiles."
+    },
+    "/users/{userId}/watchlist/{watchlistItemId}": {
+      "schema": { "$ref": "#/backend/entities/WatchlistEntry" },
+      "description": "Individual movie entries for a specific user."
+    },
+    "/users/{userId}/sceneMemories/{memoryId}": {
+      "schema": { "$ref": "#/backend/entities/SceneMemory" },
+      "description": "User's personal cinematic notes."
+    },
+    "/watchParties/{partyId}": {
+      "schema": "object",
+      "description": "Collaborative watch party rooms."
+    },
+    "/comments/{commentId}": {
+      "schema": "object",
+      "description": "Global movie comments."
+    }
   }
 }
