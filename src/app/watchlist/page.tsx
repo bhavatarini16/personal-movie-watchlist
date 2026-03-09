@@ -4,7 +4,7 @@ import { useUser, useFirestore, useMemoFirebase, useCollection } from '@/firebas
 import { collection, query, orderBy } from 'firebase/firestore';
 import MovieCard from '@/components/movie-card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { List, CheckCircle2, Clock, Loader2, PlayCircle, Heart, Bell, Star } from 'lucide-react';
+import { List, CheckCircle2, Clock, Loader2, PlayCircle, Heart, Bell, Star, Sparkles } from 'lucide-react';
 import { WatchlistEntry } from '../lib/types';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
