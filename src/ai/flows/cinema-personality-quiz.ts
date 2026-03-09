@@ -1,6 +1,7 @@
+
 'use server';
 /**
- * @fileOverview An AI agent that determines a user's cinema personality based on their movie preferences.
+ * @fileOverview An AI agent that determines a user's cinema personality based on a structured 10-question quiz.
  *
  * - cinemaPersonalityQuiz - A function that handles the cinema personality quiz process.
  * - CinemaPersonalityQuizInput - The input type for the cinemaPersonalityQuiz function.
@@ -11,19 +12,10 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
 const CinemaPersonalityQuizInputSchema = z.object({
-  favoriteGenres: z
-    .array(z.string())
-    .describe('A list of the user\u0027s favorite movie genres.'),
-  favoriteMovies: z
-    .array(z.string())
-    .describe(
-      'A list of specific favorite movies provided by the user, and optionally why they like them.'
-    ),
-  movieExperience: z
-    .string()
-    .describe(
-      'A description of what kind of movie experience the user seeks (e.g., excitement, thought-provoking, emotional).'
-    ),
+  answers: z.array(z.object({
+    question: z.string(),
+    answer: z.string()
+  })).describe('A list of questions and the user\'s chosen answers from the MCQ quiz.')
 });
 export type CinemaPersonalityQuizInput = z.infer<
   typeof CinemaPersonalityQuizInputSchema
@@ -37,7 +29,7 @@ const CinemaPersonalityQuizOutputSchema = z.object({
     ),
   description: z
     .string()
-    .describe('A brief explanation of the determined cinema personality type.'),
+    .describe('A brief, engaging explanation of the determined cinema personality type.'),
 });
 export type CinemaPersonalityQuizOutput = z.infer<
   typeof CinemaPersonalityQuizOutputSchema
@@ -53,17 +45,19 @@ const prompt = ai.definePrompt({
   name: 'cinemaPersonalityQuizPrompt',
   input: { schema: CinemaPersonalityQuizInputSchema },
   output: { schema: CinemaPersonalityQuizOutputSchema },
-  prompt: `You are an expert cinema personality analyzer. Your goal is to determine a user's unique 'cinema personality' based on their movie preferences.
+  prompt: `You are an expert cinema personality analyzer. Your goal is to determine a user's unique 'cinema personality' based on their answers to a 10-question MCQ quiz.
 
-Consider the following information provided by the user:
+User Quiz Answers:
+{{#each answers}}
+Q: {{{this.question}}}
+A: {{{this.answer}}}
+{{/each}}
 
-Favorite Genres: {{#each favoriteGenres}}- {{{this}}}\n{{/each}}
-Favorite Movies (and why): {{#each favoriteMovies}}- {{{this}}}\n{{/each}}
-Desired Movie Experience: {{{movieExperience}}}
+Based on these specific preferences regarding pacing, genre, narrative structure, and visual style, categorize the user into a fitting personality type. 
 
-Based on these preferences, categorize the user into one of the following example personality types, or a similar fitting one: 'Action Addict', 'Sci-Fi Thinker', 'Drama Lover', 'Comedy Enthusiast', 'Arthouse Aficionado', 'Thriller Seeker', 'Fantasy Fanatic', 'Horror Hound', 'Documentary Devotee', 'Musical Maven'.
+Example types include but are not limited to: 'Action Addict', 'Sci-Fi Thinker', 'Drama Lover', 'Comedy Relaxer', 'Arthouse Aficionado', 'Thriller Seeker', 'Fantasy Fanatic', 'Horror Hound', 'Indie Explorer', 'Documentary Devotee', 'Emotional Story Lover'.
 
-Provide a concise and engaging description for the determined personality type.
+Provide a concise, catchy name for the personality type and a short, engaging description.
 `,
 });
 
