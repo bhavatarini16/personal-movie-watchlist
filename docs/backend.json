@@ -101,6 +101,18 @@
       "schema": { "$ref": "#/backend/entities/UserProfile" },
       "description": "User profiles and recursive personal data."
     },
+    "/users/{userId}/watchlist/{movieId}": {
+      "schema": { "$ref": "#/backend/entities/WatchlistEntry" },
+      "description": "The user's personal movie collection."
+    },
+    "/users/{userId}/sceneMemories/{memoryId}": {
+      "schema": { "$ref": "#/backend/entities/SceneMemory" },
+      "description": "Captured cinematic moments."
+    },
+    "/users/{userId}/notifications/{notifId}": {
+      "schema": { "type": "object" },
+      "description": "Personal party invites and alerts."
+    },
     "/watchParties/{partyId}": {
       "schema": { "$ref": "#/backend/entities/WatchParty" },
       "description": "Watch party room metadata."

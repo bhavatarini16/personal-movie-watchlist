@@ -14,16 +14,30 @@ service cloud.firestore {
 
     // --- Rules ---
 
-    // Users have full recursive access to their own data tree (watchlist, sceneMemories, etc.)
+    // Users have full authority over their own profile and all its subcollections
     match /users/{userId} {
       allow read, write: if isOwner(userId);
       
+      // Explicit rules for subcollections to avoid any listing ambiguity
+      match /watchlist/{id} {
+        allow read, write: if isOwner(userId);
+      }
+      
+      match /sceneMemories/{id} {
+        allow read, write: if isOwner(userId);
+      }
+      
+      match /notifications/{id} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // Catch-all for any other recursive data
       match /{allSubcollections=**} {
         allow read, write: if isOwner(userId);
       }
     }
 
-    // Watch Parties are collaborative
+    // Watch Parties are collaborative spaces
     match /watchParties/{partyId} {
       allow read, create: if isSignedIn();
       allow update: if isSignedIn();
