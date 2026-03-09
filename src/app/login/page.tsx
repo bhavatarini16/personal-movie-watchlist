@@ -1,8 +1,7 @@
-
 "use client";
 
-import { useState } from 'react';
-import { useAuth, initiateEmailSignIn, initiateEmailSignUp, initiateAnonymousSignIn } from '@/firebase';
+import { useState, useEffect } from 'react';
+import { useAuth, useUser, initiateEmailSignIn, initiateEmailSignUp, initiateAnonymousSignIn } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -12,6 +11,7 @@ import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const auth = useAuth();
+  const { user, isUserLoading } = useUser();
   const { toast } = useToast();
   const router = useRouter();
   const [isSignUp, setIsSignUp] = useState(false);
@@ -19,31 +19,52 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleAuth = async (e: React.FormEvent) => {
+  // Handle successful sign-in via the auth state listener
+  useEffect(() => {
+    if (user && !isUserLoading) {
+      router.push('/');
+    }
+  }, [user, isUserLoading, router]);
+
+  const handleAuth = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    try {
-      if (isSignUp) {
-        initiateEmailSignUp(auth, email, password);
-        toast({ title: "Account created", description: "Welcome to CineTrack!" });
-      } else {
-        initiateEmailSignIn(auth, email, password);
-        toast({ title: "Welcome back", description: "Successfully signed in." });
-      }
-      // Note: non-blocking updates handle state change, we can redirect or let auth listener handle it
-      router.push('/');
-    } catch (error: any) {
-      toast({ variant: "destructive", title: "Authentication failed", description: error.message });
-    } finally {
+    
+    const authPromise = isSignUp 
+      ? initiateEmailSignUp(auth, email, password)
+      : initiateEmailSignIn(auth, email, password);
+
+    authPromise.catch((error: any) => {
       setLoading(false);
-    }
+      let message = error.message;
+      
+      // Provide user-friendly messages for common errors
+      if (error.code === 'auth/email-already-in-use') {
+        message = "This email is already associated with an account. Please sign in instead.";
+      } else if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+        message = "Invalid email or password.";
+      } else if (error.code === 'auth/weak-password') {
+        message = "Password should be at least 6 characters.";
+      }
+
+      toast({ 
+        variant: "destructive", 
+        title: isSignUp ? "Sign Up Failed" : "Sign In Failed", 
+        description: message 
+      });
+    });
   };
 
   const handleGuestSignIn = () => {
     setLoading(true);
-    initiateAnonymousSignIn(auth);
-    toast({ title: "Signed in as Guest", description: "You can now track movies!" });
-    router.push('/');
+    initiateAnonymousSignIn(auth).catch((error: any) => {
+      setLoading(false);
+      toast({ 
+        variant: "destructive", 
+        title: "Guest Access Failed", 
+        description: error.message 
+      });
+    });
   };
 
   return (
