@@ -1,24 +1,21 @@
+
 "use client";
 
 import { useState } from 'react';
-import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking } from '@/firebase';
-import { collection, query, orderBy, doc, setDoc } from 'firebase/firestore';
-import { WatchParty, WatchPartyMember } from '../lib/types';
+import { useUser, useFirestore, useCollection, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
+import { collection, query, orderBy, doc } from 'firebase/firestore';
+import { WatchParty } from '../lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { 
-  Users, 
-  Calendar, 
   Plus, 
   Loader2, 
   ArrowRight, 
   Tv, 
-  Clock, 
+  Calendar, 
   CheckCircle2, 
-  Vote, 
-  MessageCircle,
   Shield
 } from 'lucide-react';
 import Link from 'next/link';
@@ -63,27 +60,22 @@ export default function WatchPartiesPage() {
       status: 'voting'
     };
 
-    // Use setDoc for initial party doc to control the ID
-    setDoc(partyRef, partyData)
-      .then(() => {
-        // Also add host as a member
-        const memberRef = doc(firestore, `watchParties/${partyId}/members/${user.uid}`);
-        setDoc(memberRef, {
-          id: user.uid,
-          userId: user.uid,
-          username: partyData.hostName,
-          avatarUrl: `https://picsum.photos/seed/${user.uid}/100`,
-          joinedAt: new Date().toISOString()
-        });
-        
-        setIsCreating(false);
-        setNewParty({ title: '', description: '', date: '' });
-        toast({ title: "Party Scheduled!", description: "Invite your friends to start the vote." });
-      })
-      .catch(err => {
-        console.error(err);
-        toast({ variant: "destructive", title: "Creation Failed", description: "Could not initialize watch party." });
-      });
+    // Use non-blocking setDocument for initial party doc
+    setDocumentNonBlocking(partyRef, partyData, { merge: true });
+    
+    // Also add host as a member immediately
+    const memberRef = doc(firestore, `watchParties/${partyId}/members/${user.uid}`);
+    setDocumentNonBlocking(memberRef, {
+      id: user.uid,
+      userId: user.uid,
+      username: partyData.hostName,
+      avatarUrl: `https://picsum.photos/seed/${user.uid}/100`,
+      joinedAt: new Date().toISOString()
+    }, { merge: true });
+    
+    setIsCreating(false);
+    setNewParty({ title: '', description: '', date: '' });
+    toast({ title: "Party Scheduled!", description: "Invite your friends to start the vote." });
   };
 
   if (isLoading) {

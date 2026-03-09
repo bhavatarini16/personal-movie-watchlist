@@ -28,7 +28,7 @@
     "WatchlistEntry": {
       "title": "WatchlistEntry",
       "type": "object",
-      "description": "A movie entry in a user's watchlist.",
+      "description": "A movie entry in a user's watchlist, keyed by tmdbId.",
       "properties": {
         "userId": { "type": "string" },
         "movieId": { "type": "string" },
@@ -59,6 +59,77 @@
         "addedDate": { "type": "string", "format": "date-time" }
       },
       "required": ["userId", "movieId", "timestamp"]
+    },
+    "WatchParty": {
+      "title": "WatchParty",
+      "type": "object",
+      "description": "A collaborative movie watching room.",
+      "properties": {
+        "id": { "type": "string" },
+        "hostId": { "type": "string" },
+        "hostName": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "scheduledAt": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["draft", "voting", "ready", "finished"] },
+        "selectedMovieId": { "type": "string" },
+        "selectedMovieTitle": { "type": "string" },
+        "selectedMoviePoster": { "type": "string" }
+      }
+    },
+    "WatchPartyMember": {
+      "title": "WatchPartyMember",
+      "type": "object",
+      "description": "A participant in a watch party.",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "username": { "type": "string" },
+        "avatarUrl": { "type": "string" },
+        "joinedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "WatchPartyNomination": {
+      "title": "WatchPartyNomination",
+      "type": "object",
+      "description": "A movie suggestion within a watch party.",
+      "properties": {
+        "id": { "type": "string" },
+        "movieId": { "type": "string" },
+        "movieTitle": { "type": "string" },
+        "posterUrl": { "type": "string" },
+        "nominatorId": { "type": "string" },
+        "nominatorName": { "type": "string" },
+        "votes": { "type": "object" }
+      }
+    },
+    "Notification": {
+      "title": "Notification",
+      "type": "object",
+      "description": "A user alert, e.g., for a watch party invite.",
+      "properties": {
+        "userId": { "type": "string" },
+        "type": { "type": "string" },
+        "partyId": { "type": "string" },
+        "partyTitle": { "type": "string" },
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Comment": {
+      "title": "Comment",
+      "type": "object",
+      "description": "A social comment on a movie.",
+      "properties": {
+        "userId": { "type": "string" },
+        "username": { "type": "string" },
+        "avatarUrl": { "type": "string" },
+        "watchlistEntryId": { "type": "string" },
+        "text": { "type": "string" },
+        "commentDate": { "type": "string", "format": "date-time" }
+      }
     }
   },
   "auth": {
@@ -69,32 +140,32 @@
       "schema": { "$ref": "#/backend/entities/UserProfile" },
       "description": "Core user profiles."
     },
-    "/users/{userId}/watchlist/{itemId}": {
+    "/users/{userId}/watchlist/{movieId}": {
       "schema": { "$ref": "#/backend/entities/WatchlistEntry" },
-      "description": "User's personal movie tracking queue."
+      "description": "User's personal movie tracking queue, keyed by movie tmdbId."
     },
     "/users/{userId}/sceneMemories/{memoryId}": {
       "schema": { "$ref": "#/backend/entities/SceneMemory" },
       "description": "User's personal cinematic notes and highlights."
     },
     "/users/{userId}/notifications/{notifId}": {
-      "schema": "object",
+      "schema": { "$ref": "#/backend/entities/Notification" },
       "description": "User's activity alerts and invitations."
     },
     "/watchParties/{partyId}": {
-      "schema": "object",
+      "schema": { "$ref": "#/backend/entities/WatchParty" },
       "description": "Collaborative watch party rooms."
     },
-    "/watchParties/{partyId}/members/{memberId}": {
-      "schema": "object",
-      "description": "Participants in a specific watch party."
+    "/watchParties/{partyId}/members/{userId}": {
+      "schema": { "$ref": "#/backend/entities/WatchPartyMember" },
+      "description": "Participants in a specific watch party, keyed by userId."
     },
     "/watchParties/{partyId}/nominations/{nominationId}": {
-      "schema": "object",
+      "schema": { "$ref": "#/backend/entities/WatchPartyNomination" },
       "description": "Movie suggestions and votes within a watch party."
     },
     "/comments/{commentId}": {
-      "schema": "object",
+      "schema": { "$ref": "#/backend/entities/Comment" },
       "description": "Global movie discussion comments."
     }
   }

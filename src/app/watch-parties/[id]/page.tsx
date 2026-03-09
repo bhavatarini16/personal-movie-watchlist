@@ -3,8 +3,8 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase, updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
-import { doc, collection, query, setDoc, deleteDoc, where, getDoc } from 'firebase/firestore';
+import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase, updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
+import { doc, collection, query, where, getDoc } from 'firebase/firestore';
 import { WatchParty, WatchPartyNomination, WatchPartyMember, Movie, UserProfile, Notification } from '@/app/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -13,14 +13,11 @@ import {
   Loader2, 
   Calendar, 
   UserPlus, 
-  Plus, 
   Vote, 
   CheckCircle2, 
   Film, 
   ArrowLeft, 
-  Trash2,
   Users,
-  Sparkles,
   Play,
   Share2,
   UserCheck,
@@ -90,21 +87,21 @@ export default function WatchPartyDetailsPage() {
   const handleJoin = async () => {
     if (!user || !firestore) return;
     const memberRef = doc(firestore, `watchParties/${partyId}/members/${user.uid}`);
-    setDoc(memberRef, {
+    setDocumentNonBlocking(memberRef, {
       id: user.uid,
       userId: user.uid,
       username: user.email?.split('@')[0].toUpperCase() || 'GUEST',
       avatarUrl: `https://picsum.photos/seed/${user.uid}/100`,
       joinedAt: new Date().toISOString()
-    });
+    }, { merge: true });
     toast({ title: "Joined the Party!", description: "You can now nominate and vote for movies." });
   };
 
   const handleSendInvite = async (friend: UserProfile) => {
     if (!user || !firestore || !party) return;
     
-    const notificationRef = collection(firestore, `users/${friend.id}/notifications`);
-    addDocumentNonBlocking(notificationRef, {
+    const notificationRef = doc(collection(firestore, `users/${friend.id}/notifications`));
+    setDocumentNonBlocking(notificationRef, {
       userId: friend.id,
       type: 'watch-party-invite',
       partyId: party.id,
@@ -113,7 +110,7 @@ export default function WatchPartyDetailsPage() {
       senderName: user.email?.split('@')[0].toUpperCase() || 'HOST',
       status: 'pending',
       createdAt: new Date().toISOString()
-    } as Omit<Notification, 'id'>);
+    }, { merge: true });
 
     toast({ title: "Invite Sent", description: `${friend.username} has been notified of the party.` });
   };
@@ -133,7 +130,7 @@ export default function WatchPartyDetailsPage() {
   const handleNominate = async (movie: Movie) => {
     if (!user || !firestore) return;
     const nominationRef = doc(collection(firestore, `watchParties/${partyId}/nominations`));
-    setDoc(nominationRef, {
+    setDocumentNonBlocking(nominationRef, {
       id: nominationRef.id,
       movieId: movie.tmdbId,
       movieTitle: movie.title,
@@ -141,7 +138,7 @@ export default function WatchPartyDetailsPage() {
       nominatorId: user.uid,
       nominatorName: user.email?.split('@')[0].toUpperCase() || 'GUEST',
       votes: {}
-    });
+    }, { merge: true });
     setSearchQuery('');
     setSearchResults([]);
     toast({ title: "Movie Nominated!", description: `${movie.title} added to the ballot.` });

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Star, Calendar, Clock, Plus, Check, Trash2, Edit3, MessageSquare, Send, Lock, Bell, BellOff, Video, Quote, StickyNote } from "lucide-react";
 import Image from "next/image";
-import { useUser, useFirestore, useMemoFirebase, useCollection, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase";
+import { useUser, useFirestore, useMemoFirebase, useCollection, addDocumentNonBlocking, setDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase";
 import { collection, query, where, doc, orderBy, limit } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useMemo } from "react";
@@ -54,7 +54,6 @@ export default function MovieDetailsDialog({ movie, isOpen, onClose }: MovieDeta
 
   const commentsRef = useMemoFirebase(() => {
     if (!isOpen || !movie?.tmdbId || !user?.uid || !firestore) return null;
-    // Removed orderBy to avoid index requirement for initial dev
     return query(
       collection(firestore, `comments`),
       where("watchlistEntryId", "==", movie.tmdbId),
@@ -92,7 +91,8 @@ export default function MovieDetailsDialog({ movie, isOpen, onClose }: MovieDeta
       deleteDocumentNonBlocking(doc(firestore, `users/${user.uid}/watchlist`, entry.id));
       toast({ title: "Removed from collection" });
     } else {
-      addDocumentNonBlocking(collection(firestore, `users/${user.uid}/watchlist`), {
+      setDocumentNonBlocking(doc(firestore, `users/${user.uid}/watchlist/${movie.tmdbId}`), {
+        id: movie.tmdbId,
         userId: user.uid,
         movieId: movie.tmdbId,
         movieData: movie,
@@ -100,7 +100,7 @@ export default function MovieDetailsDialog({ movie, isOpen, onClose }: MovieDeta
         isWatched: false,
         rewatchCount: 0,
         remindMe: isUpcoming,
-      });
+      }, { merge: true });
       toast({ 
         title: isUpcoming ? "Reminder Set" : "Added to watchlist",
         description: isUpcoming ? `We'll notify you when "${movie.title}" releases.` : ""

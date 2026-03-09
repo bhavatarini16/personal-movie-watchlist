@@ -7,7 +7,7 @@ import { Movie, WatchlistEntry } from '@/app/lib/types';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
-import { useUser, useFirestore, useMemoFirebase, useCollection, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
+import { useUser, useFirestore, useMemoFirebase, useCollection, setDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
 import { collection, query, where, doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useMemo } from 'react';
@@ -51,7 +51,9 @@ export default function MovieCard({ movie, variant = 'grid' }: MovieCardProps) {
       return;
     }
 
-    addDocumentNonBlocking(collection(firestore, `users/${user.uid}/watchlist`), {
+    // Use setDocumentNonBlocking with tmdbId as the doc ID for readability in Console
+    setDocumentNonBlocking(doc(firestore, `users/${user.uid}/watchlist/${movie.tmdbId}`), {
+      id: movie.tmdbId,
       userId: user.uid,
       movieId: movie.tmdbId,
       movieData: movie,
@@ -60,7 +62,8 @@ export default function MovieCard({ movie, variant = 'grid' }: MovieCardProps) {
       rewatchCount: 0,
       isFavorite: false,
       remindMe: isUpcoming,
-    });
+    }, { merge: true });
+    
     toast({ 
       title: isUpcoming ? "Reminder Set" : "Added to Queue", 
       description: isUpcoming ? `We'll alert you when ${movie.title} releases.` : `${movie.title} is now tracked.` 
@@ -83,7 +86,8 @@ export default function MovieCard({ movie, variant = 'grid' }: MovieCardProps) {
         description: movie.title 
       });
     } else {
-      addDocumentNonBlocking(collection(firestore, `users/${user.uid}/watchlist`), {
+      setDocumentNonBlocking(doc(firestore, `users/${user.uid}/watchlist/${movie.tmdbId}`), {
+        id: movie.tmdbId,
         userId: user.uid,
         movieId: movie.tmdbId,
         movieData: movie,
@@ -92,7 +96,7 @@ export default function MovieCard({ movie, variant = 'grid' }: MovieCardProps) {
         rewatchCount: 0,
         isFavorite: true,
         remindMe: isUpcoming,
-      });
+      }, { merge: true });
       toast({ title: "Added to Favorites", description: `${movie.title} added to your queue.` });
     }
   };
