@@ -5,7 +5,7 @@ import { Movie, WatchlistEntry, Comment } from "@/app/lib/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Star, Calendar, Clock, User, Plus, Check, Trash2, Edit3, MessageSquare, Send } from "lucide-react";
+import { Star, Calendar, Clock, User, Plus, Check, Trash2, Edit3, MessageSquare, Send, Lock } from "lucide-react";
 import Image from "next/image";
 import { useUser, useFirestore, useMemoFirebase, useCollection, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase";
 import { collection, query, where, doc, orderBy, limit } from "firebase/firestore";
@@ -43,16 +43,17 @@ export default function MovieDetailsDialog({ movie, isOpen, onClose }: MovieDeta
   const entry = watchlistEntries?.[0];
 
   const commentsRef = useMemoFirebase(() => {
-    if (!movie) return null;
+    // CRITICAL: Only attempt to fetch comments if a user is signed in to avoid security rule violations
+    if (!movie || !user) return null;
     return query(
       collection(firestore, `comments`),
-      where("watchlistEntryId", "==", movie.tmdbId), // Simple mapping to movie for discovery
+      where("watchlistEntryId", "==", movie.tmdbId),
       orderBy("commentDate", "desc"),
       limit(20)
     );
-  }, [movie, firestore]);
+  }, [movie, user, firestore]);
 
-  const { data: comments } = useCollection<Comment>(commentsRef);
+  const { data: comments, isLoading: isCommentsLoading } = useCollection<Comment>(commentsRef);
 
   if (!movie) return null;
 
@@ -153,7 +154,6 @@ export default function MovieDetailsDialog({ movie, isOpen, onClose }: MovieDeta
               <p className="text-white/70 leading-relaxed text-xl font-light">{movie.overview}</p>
             </div>
 
-            {/* Cast & Crew Mini Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                <div className="space-y-1">
                  <p className="text-[10px] uppercase tracking-widest text-white/30 font-bold">Director</p>
@@ -165,7 +165,6 @@ export default function MovieDetailsDialog({ movie, isOpen, onClose }: MovieDeta
                </div>
             </div>
 
-            {/* User Review Section */}
             {entry && (
               <div className="space-y-6 pt-10 border-t border-white/5">
                 <div className="flex items-center justify-between">
@@ -230,7 +229,6 @@ export default function MovieDetailsDialog({ movie, isOpen, onClose }: MovieDeta
           </div>
 
           <div className="lg:col-span-4 space-y-10">
-            {/* Action Panel */}
             <div className="space-y-4">
               <Button 
                 onClick={handleToggleWatchlist}
@@ -252,50 +250,59 @@ export default function MovieDetailsDialog({ movie, isOpen, onClose }: MovieDeta
               )}
             </div>
 
-            {/* Discussion / Social */}
             <div className="space-y-6 pt-10 border-t border-white/5">
                <h4 className="text-[10px] font-bold text-white/40 tracking-[0.4em] uppercase flex items-center gap-2">
                 <MessageSquare className="w-4 h-4" /> Social Pulse
                </h4>
                
-               <ScrollArea className="h-64 pr-4">
-                 <div className="space-y-6">
-                   {comments?.map(comment => (
-                     <div key={comment.id} className="flex gap-3 group">
-                       <Avatar className="w-8 h-8 shrink-0">
-                         <AvatarImage src={comment.avatarUrl} />
-                         <AvatarFallback>{comment.username[0]}</AvatarFallback>
-                       </Avatar>
-                       <div className="space-y-1">
-                         <div className="flex items-center gap-2">
-                           <span className="text-xs font-bold text-white">{comment.username}</span>
-                           <span className="text-[10px] text-white/30">{new Date(comment.commentDate).toLocaleDateString()}</span>
+               {user ? (
+                 <>
+                   <ScrollArea className="h-64 pr-4">
+                     <div className="space-y-6">
+                       {comments?.map(comment => (
+                         <div key={comment.id} className="flex gap-3 group">
+                           <Avatar className="w-8 h-8 shrink-0">
+                             <AvatarImage src={comment.avatarUrl} />
+                             <AvatarFallback>{comment.username[0]}</AvatarFallback>
+                           </Avatar>
+                           <div className="space-y-1">
+                             <div className="flex items-center gap-2">
+                               <span className="text-xs font-bold text-white">{comment.username}</span>
+                               <span className="text-[10px] text-white/30">{new Date(comment.commentDate).toLocaleDateString()}</span>
+                             </div>
+                             <p className="text-sm text-white/70">{comment.text}</p>
+                           </div>
                          </div>
-                         <p className="text-sm text-white/70">{comment.text}</p>
-                       </div>
+                       ))}
+                       {!isCommentsLoading && comments?.length === 0 && <p className="text-center py-10 text-white/20 italic text-sm">Silence in the theater. Be the first to speak.</p>}
+                       {isCommentsLoading && <p className="text-center py-10 text-white/20 italic text-sm">Loading insights...</p>}
                      </div>
-                   ))}
-                   {comments?.length === 0 && <p className="text-center py-10 text-white/20 italic text-sm">Silence in the theater. Be the first to speak.</p>}
-                 </div>
-               </ScrollArea>
+                   </ScrollArea>
 
-               <div className="relative pt-4">
-                 <Input 
-                   placeholder="Share your insight..." 
-                   className="bg-white/5 border-white/10 pr-12 h-12 rounded-xl"
-                   value={commentText}
-                   onChange={(e) => setCommentText(e.target.value)}
-                   onKeyDown={(e) => e.key === 'Enter' && handlePostComment()}
-                 />
-                 <Button 
-                   size="icon" 
-                   className="absolute right-1 top-[1.25rem] h-10 w-10 bg-primary hover:bg-primary/80 rounded-lg"
-                   onClick={handlePostComment}
-                   disabled={!commentText.trim()}
-                 >
-                   <Send className="w-4 h-4" />
-                 </Button>
-               </div>
+                   <div className="relative pt-4">
+                     <Input 
+                       placeholder="Share your insight..." 
+                       className="bg-white/5 border-white/10 pr-12 h-12 rounded-xl"
+                       value={commentText}
+                       onChange={(e) => setCommentText(e.target.value)}
+                       onKeyDown={(e) => e.key === 'Enter' && handlePostComment()}
+                     />
+                     <Button 
+                       size="icon" 
+                       className="absolute right-1 top-[1.25rem] h-10 w-10 bg-primary hover:bg-primary/80 rounded-lg"
+                       onClick={handlePostComment}
+                       disabled={!commentText.trim()}
+                     >
+                       <Send className="w-4 h-4" />
+                     </Button>
+                   </div>
+                 </>
+               ) : (
+                 <div className="h-64 flex flex-col items-center justify-center text-center p-6 bg-white/5 rounded-2xl border border-white/5 space-y-4">
+                    <Lock className="w-8 h-8 text-white/20" />
+                    <p className="text-sm text-white/50">Join the discussion by signing in to your account.</p>
+                 </div>
+               )}
             </div>
           </div>
         </div>

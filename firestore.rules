@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -9,22 +10,6 @@ service cloud.firestore {
      * This ruleset enforces a strict user-ownership model for personal data (profiles, watchlists) 
      * while enabling social features through a "Friends" access model. Public movie data is 
      * globally readable by authenticated users but strictly read-only from the client.
-     * 
-     * Data Structure:
-     * - /users/{userId}: Root of user identity. Contains a denormalized 'friends' map for auth.
-     * - /users/{userId}/watchlist/{id}: User-specific movie tracking.
-     * - /movies, /genres, /persons, /moviePersonalityTypes: Global reference data (Read-Only).
-     * - /friendships, /comments, /reactions: Social interaction layers using denormalized IDs.
-     * 
-     * Key Security Decisions:
-     * 1. Denormalization for Performance: To avoid deep nested lookups, we use a 'friends' map 
-     *    on the UserProfile and denormalized 'owner' IDs on comments and reactions.
-     * 2. Social Access: Access to a user's private watchlist is granted if the requester's UID 
-     *    exists in the target user's 'friends' map.
-     * 3. Prototyping Flexibility: Rules enforce WHO can write (Authorization) and critical 
-     *    relational links (Integrity), but do not enforce strict field types or full schemas.
-     * 4. Structural Segregation: User-specific data is nested under /users/ for clear 
-     *    ownership boundaries.
      */
 
     // --- Helper Functions ---
@@ -37,17 +22,14 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // Used for update/delete to ensure the document exists and belongs to the user
     function isExistingOwner(userId) {
       return resource != null && isOwner(userId);
     }
 
-    // Checks if the current user is in the target user's denormalized friends map
     function isFriendOf(targetUserId) {
       return isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/users/$(targetUserId)).data.friends;
     }
 
-    // Helper for top-level social entities using denormalized data
     function isDataOwner(fieldName) {
       return isSignedIn() && request.resource.data[fieldName] == request.auth.uid;
     }
@@ -58,26 +40,12 @@ service cloud.firestore {
 
     // --- Collection Rules ---
 
-    /**
-     * @description Rules for User Profiles. Users can manage their own profile. Friends can view profiles.
-     * @path /users/{userId}
-     * @allow (get, list) if owner or friend; (create, update) if owner.
-     * @deny (update) if userId doesn't match auth.uid.
-     * @principle Ownership and Shared Access via denormalized friends list.
-     */
     match /users/{userId} {
       allow get, list: if isOwner(userId) || isFriendOf(userId);
       allow create: if isOwner(userId) && request.resource.data.id == userId;
       allow update: if isExistingOwner(userId) && request.resource.data.id == userId;
       allow delete: if isExistingOwner(userId);
 
-      /**
-       * @description Rules for personal watchlists. Sub-collection of users.
-       * @path /users/{userId}/watchlist/{watchlistEntryId}
-       * @allow (get, list) if owner or friend; (write) if owner.
-       * @deny (create) if the entry is not linked to the path's userId.
-       * @principle Path-based authorization and ownership.
-       */
       match /watchlist/{watchlistEntryId} {
         allow get, list: if isOwner(userId) || isFriendOf(userId);
         allow create: if isOwner(userId) && request.resource.data.userId == userId;
@@ -86,61 +54,26 @@ service cloud.firestore {
       }
     }
 
-    /**
-     * @description Publicly readable movie reference data.
-     * @path /movies/{movieId}
-     * @allow (get, list) if signed in.
-     * @deny (write) always (Client-side writes forbidden).
-     * @principle Global Read-Only for authenticated users.
-     */
     match /movies/{movieId} {
       allow get, list: if isSignedIn();
       allow create, update, delete: if false;
     }
 
-    /**
-     * @description Publicly readable genre categories.
-     * @path /genres/{genreId}
-     * @allow (get, list) if signed in.
-     * @deny (write) always.
-     * @principle Global Read-Only for authenticated users.
-     */
     match /genres/{genreId} {
       allow get, list: if isSignedIn();
       allow create, update, delete: if false;
     }
 
-    /**
-     * @description Publicly readable cast and crew details.
-     * @path /persons/{personId}
-     * @allow (get, list) if signed in.
-     * @deny (write) always.
-     * @principle Global Read-Only for authenticated users.
-     */
     match /persons/{personId} {
       allow get, list: if isSignedIn();
       allow create, update, delete: if false;
     }
 
-    /**
-     * @description Publicly readable personality types for the quiz feature.
-     * @path /moviePersonalityTypes/{typeId}
-     * @allow (get, list) if signed in.
-     * @deny (write) always.
-     * @principle Global Read-Only for authenticated users.
-     */
     match /moviePersonalityTypes/{typeId} {
       allow get, list: if isSignedIn();
       allow create, update, delete: if false;
     }
 
-    /**
-     * @description Manages friendship requests. Accessible by both parties.
-     * @path /friendships/{friendshipId}
-     * @allow (get, list) if requester or addressee.
-     * @deny (create) if requesterId is not the sender.
-     * @principle Shared access restricted to involved parties.
-     */
     match /friendships/{friendshipId} {
       allow get, list: if isSignedIn() && (resource.data.requesterId == request.auth.uid || resource.data.addresseeId == request.auth.uid);
       allow create: if isSignedIn() && request.resource.data.requesterId == request.auth.uid;
@@ -148,29 +81,16 @@ service cloud.firestore {
       allow delete: if isSignedIn() && (resource.data.requesterId == request.auth.uid || resource.data.addresseeId == request.auth.uid);
     }
 
-    /**
-     * @description Social comments on reviews. Readable by author, watchlist owner, and friends.
-     * @path /comments/{commentId}
-     * @allow (get, list) if author, watchlist owner, or friend of owner.
-     * @deny (update, delete) if not the author.
-     * @principle Authorization Independence via denormalized owner IDs.
-     */
     match /comments/{commentId} {
-      allow get, list: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.watchlistEntryOwnerId == request.auth.uid || isFriendOf(resource.data.watchlistEntryOwnerId));
+      // Simplified read rules to allow all signed-in users to see movie discussions
+      allow get, list: if isSignedIn();
       allow create: if isDataOwner('userId');
       allow update: if isExistingDataOwner('userId') && request.resource.data.userId == resource.data.userId;
       allow delete: if isExistingDataOwner('userId');
     }
 
-    /**
-     * @description Social reactions (likes) on comments.
-     * @path /reactions/{reactionId}
-     * @allow (get, list) if reactor, comment author, or friend.
-     * @deny (update, delete) if not the reactor.
-     * @principle Authorization Independence via denormalized reactor/author IDs.
-     */
     match /reactions/{reactionId} {
-      allow get, list: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.commentAuthorId == request.auth.uid || isFriendOf(resource.data.watchlistEntryOwnerId));
+      allow get, list: if isSignedIn();
       allow create: if isDataOwner('userId');
       allow update: if isExistingDataOwner('userId') && request.resource.data.userId == resource.data.userId;
       allow delete: if isExistingDataOwner('userId');
