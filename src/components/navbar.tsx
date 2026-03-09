@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Film, List, BarChart3, Users, Sparkles, User, Search } from 'lucide-react';
+import { Film, List, BarChart3, Users, Sparkles, User, Search, LogIn } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import { useUser } from '@/firebase';
@@ -57,18 +57,26 @@ export default function Navbar() {
         <Button size="icon" variant="ghost" className="text-white/70 hover:text-white md:hidden">
           <Search className="w-5 h-5" />
         </Button>
-        <Link href="/profile">
-          <Button size="icon" variant="outline" className={cn(
-            "rounded-full border-white/10 bg-white/5 hover:bg-primary hover:text-white transition-all overflow-hidden",
-            pathname === '/profile' && "border-primary text-primary"
-          )}>
-            {user ? (
+        {user ? (
+          <Link href="/profile">
+            <Button size="icon" variant="outline" className={cn(
+              "rounded-full border-white/10 bg-white/5 hover:bg-primary hover:text-white transition-all overflow-hidden w-10 h-10",
+              pathname === '/profile' && "border-primary text-primary"
+            )}>
               <img src={`https://picsum.photos/seed/${user.uid}/100`} alt="Profile" className="w-full h-full object-cover" />
-            ) : (
-              <User className="w-5 h-5" />
-            )}
-          </Button>
-        </Link>
+            </Button>
+          </Link>
+        ) : (
+          <Link href="/login">
+            <Button variant="default" className="bg-primary hover:bg-primary/80 font-headline hidden sm:flex">
+              <LogIn className="w-4 h-4 mr-2" />
+              Sign In
+            </Button>
+            <Button size="icon" variant="outline" className="sm:hidden glass border-white/10">
+              <LogIn className="w-4 h-4" />
+            </Button>
+          </Link>
+        )}
       </div>
     </nav>
   );

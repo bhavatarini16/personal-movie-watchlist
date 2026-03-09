@@ -1,20 +1,24 @@
 
 "use client";
 
-import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase, useAuth } from '@/firebase';
 import { doc, collection, query, orderBy, limit } from 'firebase/firestore';
 import { UserProfile, WatchlistEntry } from '../lib/types';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Film, Star, Calendar, Sparkles, Loader2, Settings, History } from 'lucide-react';
+import { Film, Star, Calendar, Sparkles, Loader2, Settings, History, LogOut, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import MovieCard from '@/components/movie-card';
 import Link from 'next/link';
+import { signOut } from 'firebase/auth';
+import { useRouter } from 'next/navigation';
 
 export default function ProfilePage() {
   const { user, isUserLoading } = useUser();
+  const auth = useAuth();
   const firestore = useFirestore();
+  const router = useRouter();
 
   const userDocRef = useMemoFirebase(() => {
     if (!user) return null;
@@ -34,7 +38,12 @@ export default function ProfilePage() {
 
   const { data: recentWatched, isLoading: isHistoryLoading } = useCollection<WatchlistEntry>(historyRef);
 
-  if (isUserLoading || isHistoryLoading) {
+  const handleSignOut = async () => {
+    await signOut(auth);
+    router.push('/');
+  };
+
+  if (isUserLoading || (user && isHistoryLoading)) {
     return (
       <div className="h-screen flex items-center justify-center">
         <Loader2 className="w-10 h-10 text-primary animate-spin" />
@@ -44,8 +53,21 @@ export default function ProfilePage() {
 
   if (!user) {
     return (
-      <div className="pt-24 min-h-screen flex items-center justify-center">
-        <p className="text-white/50">Please sign in to view your profile.</p>
+      <div className="pt-24 min-h-screen flex items-center justify-center px-4">
+        <div className="max-w-md w-full glass border-white/10 rounded-3xl p-12 text-center space-y-8 animate-fade-in">
+          <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto border border-primary/20">
+            <Film className="w-10 h-10 text-primary" />
+          </div>
+          <div className="space-y-4">
+            <h1 className="text-3xl font-headline font-bold text-white">Join the Community</h1>
+            <p className="text-white/50">Sign in to unlock personalized analytics, track your watch history, and find your cinematic personality.</p>
+          </div>
+          <Link href="/login" className="block w-full">
+            <Button className="w-full bg-primary h-12 text-lg font-headline">
+              <LogIn className="w-5 h-5 mr-2" /> Sign In
+            </Button>
+          </Link>
+        </div>
       </div>
     );
   }
@@ -59,7 +81,7 @@ export default function ProfilePage() {
           <div className="relative">
             <Avatar className="w-32 h-32 md:w-40 md:h-40 border-4 border-white/10 shadow-2xl">
               <AvatarImage src={profile?.avatarUrl || `https://picsum.photos/seed/${user.uid}/200`} />
-              <AvatarFallback className="bg-primary text-4xl">{user.email?.[0].toUpperCase()}</AvatarFallback>
+              <AvatarFallback className="bg-primary text-4xl">{user.email?.[0].toUpperCase() || "G"}</AvatarFallback>
             </Avatar>
             <Button size="icon" variant="secondary" className="absolute bottom-1 right-1 rounded-full w-10 h-10 glass border-white/10">
               <Settings className="w-5 h-5" />
@@ -69,7 +91,7 @@ export default function ProfilePage() {
           <div className="flex-1 text-center md:text-left space-y-4">
             <div className="space-y-1">
               <h1 className="text-4xl md:text-5xl font-headline font-bold text-white tracking-tight">
-                {profile?.username || user.email?.split('@')[0].toUpperCase()}
+                {profile?.username || user.email?.split('@')[0].toUpperCase() || "GUEST USER"}
               </h1>
               <p className="text-white/40 flex items-center justify-center md:justify-start gap-2">
                 <Calendar className="w-4 h-4" /> Member since {profile?.dateJoined ? new Date(profile.dateJoined).toLocaleDateString() : 'recent'}
@@ -97,19 +119,24 @@ export default function ProfilePage() {
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4 w-full md:w-auto">
-            <Card className="glass border-white/5 bg-white/5">
-              <CardContent className="p-6 text-center">
-                <p className="text-sm text-white/40 mb-1">Watched</p>
-                <p className="text-3xl font-bold text-white">42</p>
-              </CardContent>
-            </Card>
-            <Card className="glass border-white/5 bg-white/5">
-              <CardContent className="p-6 text-center">
-                <p className="text-sm text-white/40 mb-1">Avg Rating</p>
-                <p className="text-3xl font-bold text-white">8.4</p>
-              </CardContent>
-            </Card>
+          <div className="flex flex-col gap-4 w-full md:w-auto">
+            <div className="grid grid-cols-2 gap-4">
+              <Card className="glass border-white/5 bg-white/5">
+                <CardContent className="p-6 text-center">
+                  <p className="text-sm text-white/40 mb-1">Watched</p>
+                  <p className="text-3xl font-bold text-white">42</p>
+                </CardContent>
+              </Card>
+              <Card className="glass border-white/5 bg-white/5">
+                <CardContent className="p-6 text-center">
+                  <p className="text-sm text-white/40 mb-1">Avg Rating</p>
+                  <p className="text-3xl font-bold text-white">8.4</p>
+                </CardContent>
+              </Card>
+            </div>
+            <Button variant="outline" className="glass border-red-500/20 text-red-500 hover:bg-red-500/10" onClick={handleSignOut}>
+              <LogOut className="w-4 h-4 mr-2" /> Sign Out
+            </Button>
           </div>
         </div>
       </div>
