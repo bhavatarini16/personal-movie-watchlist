@@ -1,3 +1,46 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero-backdrop",
+      "description": "Cinematic movie theater background",
+      "imageUrl": "https://picsum.photos/seed/cine1/1920/1080",
+      "imageHint": "movie theater cinema"
+    },
+    {
+      "id": "movie-poster-1",
+      "description": "Interstellar movie poster",
+      "imageUrl": "https://picsum.photos/seed/m1/600/900",
+      "imageHint": "space movie"
+    },
+    {
+      "id": "movie-poster-2",
+      "description": "Inception movie poster",
+      "imageUrl": "https://picsum.photos/seed/m2/600/900",
+      "imageHint": "dream movie"
+    },
+    {
+      "id": "movie-poster-3",
+      "description": "The Dark Knight movie poster",
+      "imageUrl": "https://picsum.photos/seed/m3/600/900",
+      "imageHint": "hero movie"
+    },
+    {
+      "id": "movie-poster-4",
+      "description": "Pulp Fiction movie poster",
+      "imageUrl": "https://picsum.photos/seed/m4/600/900",
+      "imageHint": "retro movie"
+    },
+    {
+      "id": "movie-poster-5",
+      "description": "Parasite movie poster",
+      "imageUrl": "https://picsum.photos/seed/m5/600/900",
+      "imageHint": "mystery movie"
+    },
+    {
+      "id": "movie-poster-6",
+      "description": "The Matrix movie poster",
+      "imageUrl": "https://picsum.photos/seed/m6/600/900",
+      "imageHint": "cyberpunk movie"
+    }
+  ]
 }
