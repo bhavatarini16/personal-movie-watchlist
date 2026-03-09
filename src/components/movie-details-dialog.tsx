@@ -5,6 +5,7 @@ import { Movie, WatchlistEntry, Comment, SceneMemory } from "@/app/lib/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Star, Calendar, Clock, Plus, Check, Trash2, Edit3, MessageSquare, Send, Lock, Bell, BellOff, Video, Quote, StickyNote } from "lucide-react";
 import Image from "next/image";
 import { useUser, useFirestore, useMemoFirebase, useCollection, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase";
@@ -246,7 +247,7 @@ export default function MovieDetailsDialog({ movie, isOpen, onClose }: MovieDeta
                           <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
                           <Input 
                             placeholder="e.g. 01:42:15" 
-                            className="bg-white/5 border-white/10 pl-10"
+                            className="bg-white/5 border-white/10 pl-10 text-white"
                             value={memoryTimestamp}
                             onChange={(e) => setMemoryTimestamp(e.target.value)}
                           />
@@ -258,7 +259,7 @@ export default function MovieDetailsDialog({ movie, isOpen, onClose }: MovieDeta
                           <Quote className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
                           <Input 
                             placeholder="What was said?" 
-                            className="bg-white/5 border-white/10 pl-10"
+                            className="bg-white/5 border-white/10 pl-10 text-white"
                             value={memoryQuote}
                             onChange={(e) => setMemoryQuote(e.target.value)}
                           />
@@ -269,7 +270,7 @@ export default function MovieDetailsDialog({ movie, isOpen, onClose }: MovieDeta
                       <Label className="text-[10px] uppercase tracking-widest text-white/40">Personal Note</Label>
                       <Textarea 
                         placeholder="Why is this scene etched in your mind?" 
-                        className="bg-white/5 border-white/10 min-h-[80px]"
+                        className="bg-white/5 border-white/10 min-h-[80px] text-white"
                         value={memoryNote}
                         onChange={(e) => setMemoryNote(e.target.value)}
                       />
@@ -355,7 +356,7 @@ export default function MovieDetailsDialog({ movie, isOpen, onClose }: MovieDeta
                           value={tempNotes} 
                           onChange={(e) => setTempNotes(e.target.value)}
                           placeholder="What did you think of the cinematography, score, and pacing?"
-                          className="bg-white/5 border-white/10 min-h-[140px] rounded-xl focus:ring-primary"
+                          className="bg-white/5 border-white/10 min-h-[140px] rounded-xl focus:ring-primary text-white"
                         />
                       </div>
                       <div className="flex gap-3">
@@ -449,7 +450,7 @@ export default function MovieDetailsDialog({ movie, isOpen, onClose }: MovieDeta
                      <div className="relative pt-4">
                        <Input 
                          placeholder="Share your insight..." 
-                         className="bg-white/5 border-white/10 pr-12 h-12 rounded-xl"
+                         className="bg-white/5 border-white/10 pr-12 h-12 rounded-xl text-white"
                          value={commentText}
                          onChange={(e) => setCommentText(e.target.value)}
                          onKeyDown={(e) => e.key === 'Enter' && handlePostComment()}
