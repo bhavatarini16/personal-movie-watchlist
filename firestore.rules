@@ -6,7 +6,7 @@ service cloud.firestore {
      * CineTrack Security Rules
      * 
      * Core Philosophy:
-     * - Users have full access to their own data tree.
+     * - Users have full recursive access to their own data tree.
      * - Watch Parties and Comments are collaborative.
      */
 
@@ -23,19 +23,13 @@ service cloud.firestore {
     // --- Collection Rules ---
 
     /**
-     * @description User Profiles and nested personal data (Watchlist, SceneMemories, etc.)
+     * @description User Profiles and all nested personal data (Watchlist, SceneMemories, etc.)
+     * Uses recursive matching to ensure listing and subcollection access for the owner.
      */
     match /users/{userId} {
       allow read, write: if isOwner(userId);
 
-      // Explicitly allow access to subcollections for listing operations
-      match /watchlist/{movieId} {
-        allow read, write: if isOwner(userId);
-      }
-      match /sceneMemories/{memoryId} {
-        allow read, write: if isOwner(userId);
-      }
-      match /notifications/{notifId} {
+      match /{allSubcollections=**} {
         allow read, write: if isOwner(userId);
       }
     }
