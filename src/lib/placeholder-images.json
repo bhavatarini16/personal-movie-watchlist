@@ -39,8 +39,20 @@
     {
       "id": "movie-poster-6",
       "description": "The Matrix movie poster",
-      "imageUrl": "https://picsum.photos/seed/m6/600/900",
+      "imageUrl": "https://picsum.photos/seed/m9/600/900",
       "imageHint": "cyberpunk movie"
+    },
+    {
+      "id": "movie-poster-7",
+      "description": "Spirited Away movie poster",
+      "imageUrl": "https://picsum.photos/seed/m10/600/900",
+      "imageHint": "anime movie"
+    },
+    {
+      "id": "movie-poster-8",
+      "description": "Blade Runner 2049 movie poster",
+      "imageUrl": "https://picsum.photos/seed/m14/600/900",
+      "imageHint": "sci-fi movie"
     }
   ]
 }
