@@ -6,9 +6,9 @@ service cloud.firestore {
      * CineTrack Security Rules
      * 
      * Core Philosophy:
-     * - Users have full access (read/write/list) to their own profiles and private subcollections.
-     * - Watch Parties are readable by any signed-in user, but only the host or members can perform specific mutations.
-     * - Comments are public for reading, but restricted for creation and editing.
+     * - Users have full recursive access to their own profile and all subcollections.
+     * - Watch Parties are readable by any signed-in user.
+     * - Comments are public for reading, restricted for creation/editing.
      */
 
     // --- Helper Functions ---
@@ -24,24 +24,13 @@ service cloud.firestore {
     // --- Collection Rules ---
 
     /**
-     * @description User Profiles and their private subcollections (Watchlist, Memories, Notifications).
+     * @description User Profiles and all nested private data.
+     * Recursively allows the owner to read and write any document in their tree.
      */
     match /users/{userId} {
-      // Allow the owner full access to their own root profile
       allow read, write: if isOwner(userId);
 
-      // User's private watchlist (keyed by movie tmdbId)
-      match /watchlist/{movieId} {
-        allow read, write: if isOwner(userId);
-      }
-
-      // User's private cinematic memories
-      match /sceneMemories/{memoryId} {
-        allow read, write: if isOwner(userId);
-      }
-
-      // User's private notifications
-      match /notifications/{notifId} {
+      match /{allSubcollections=**} {
         allow read, write: if isOwner(userId);
       }
     }
@@ -52,14 +41,13 @@ service cloud.firestore {
     match /watchParties/{partyId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn();
-      // Allow host to delete, allow host/members to update status/metadata
+      // Allow host/members to update status/metadata/votes
       allow update: if isSignedIn(); 
       allow delete: if isSignedIn() && resource.data.hostId == request.auth.uid;
 
       // Participants in a specific watch party
       match /members/{memberId} {
         allow read: if isSignedIn();
-        // Allow a user to join themselves or the host to invite/add others
         allow write: if isSignedIn();
       }
 
