@@ -32,26 +32,26 @@ export default function MovieDetailsDialog({ movie, isOpen, onClose }: MovieDeta
   const [commentText, setCommentText] = useState("");
 
   const watchlistRef = useMemoFirebase(() => {
-    if (!user || !movie) return null;
+    if (!user || !movie || !firestore) return null;
     return query(
       collection(firestore, `users/${user.uid}/watchlist`),
       where("movieId", "==", movie.tmdbId)
     );
-  }, [user, movie, firestore]);
+  }, [user?.uid, movie?.tmdbId, firestore]);
 
   const { data: watchlistEntries } = useCollection<WatchlistEntry>(watchlistRef);
   const entry = watchlistEntries?.[0];
 
   const commentsRef = useMemoFirebase(() => {
-    // CRITICAL: Only attempt to fetch comments if a user is signed in to avoid security rule violations
-    if (!movie || !user) return null;
+    // CRITICAL: Only attempt to fetch comments if a user is fully signed in and the movie is valid
+    if (!movie?.tmdbId || !user?.uid || !firestore) return null;
     return query(
       collection(firestore, `comments`),
       where("watchlistEntryId", "==", movie.tmdbId),
       orderBy("commentDate", "desc"),
       limit(20)
     );
-  }, [movie, user, firestore]);
+  }, [movie?.tmdbId, user?.uid, firestore]);
 
   const { data: comments, isLoading: isCommentsLoading } = useCollection<Comment>(commentsRef);
 
@@ -274,7 +274,7 @@ export default function MovieDetailsDialog({ movie, isOpen, onClose }: MovieDeta
                            </div>
                          </div>
                        ))}
-                       {!isCommentsLoading && comments?.length === 0 && <p className="text-center py-10 text-white/20 italic text-sm">Silence in the theater. Be the first to speak.</p>}
+                       {!isCommentsLoading && (comments?.length === 0 || !comments) && <p className="text-center py-10 text-white/20 italic text-sm">Silence in the theater. Be the first to speak.</p>}
                        {isCommentsLoading && <p className="text-center py-10 text-white/20 italic text-sm">Loading insights...</p>}
                      </div>
                    </ScrollArea>

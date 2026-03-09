@@ -27,7 +27,10 @@ service cloud.firestore {
     }
 
     function isFriendOf(targetUserId) {
-      return isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/users/$(targetUserId)).data.friends;
+      // Robust check for friend status that handles missing documents or fields safely
+      return isSignedIn() && 
+             exists(/databases/$(database)/documents/users/$(targetUserId)) &&
+             request.auth.uid in get(/databases/$(database)/documents/users/$(targetUserId)).data.get('friends', {});
     }
 
     function isDataOwner(fieldName) {
@@ -55,42 +58,42 @@ service cloud.firestore {
     }
 
     match /movies/{movieId} {
-      allow get, list: if isSignedIn();
+      allow read: if isSignedIn();
       allow create, update, delete: if false;
     }
 
     match /genres/{genreId} {
-      allow get, list: if isSignedIn();
+      allow read: if isSignedIn();
       allow create, update, delete: if false;
     }
 
     match /persons/{personId} {
-      allow get, list: if isSignedIn();
+      allow read: if isSignedIn();
       allow create, update, delete: if false;
     }
 
     match /moviePersonalityTypes/{typeId} {
-      allow get, list: if isSignedIn();
+      allow read: if isSignedIn();
       allow create, update, delete: if false;
     }
 
     match /friendships/{friendshipId} {
-      allow get, list: if isSignedIn() && (resource.data.requesterId == request.auth.uid || resource.data.addresseeId == request.auth.uid);
+      allow read: if isSignedIn() && (resource.data.requesterId == request.auth.uid || resource.data.addresseeId == request.auth.uid);
       allow create: if isSignedIn() && request.resource.data.requesterId == request.auth.uid;
       allow update: if isSignedIn() && (resource.data.requesterId == request.auth.uid || resource.data.addresseeId == request.auth.uid);
       allow delete: if isSignedIn() && (resource.data.requesterId == request.auth.uid || resource.data.addresseeId == request.auth.uid);
     }
 
     match /comments/{commentId} {
-      // Simplified read rules to allow all signed-in users to see movie discussions
-      allow get, list: if isSignedIn();
+      // Ensure comments are readable by any authenticated user for the social feed
+      allow read: if isSignedIn();
       allow create: if isDataOwner('userId');
       allow update: if isExistingDataOwner('userId') && request.resource.data.userId == resource.data.userId;
       allow delete: if isExistingDataOwner('userId');
     }
 
     match /reactions/{reactionId} {
-      allow get, list: if isSignedIn();
+      allow read: if isSignedIn();
       allow create: if isDataOwner('userId');
       allow update: if isExistingDataOwner('userId') && request.resource.data.userId == resource.data.userId;
       allow delete: if isExistingDataOwner('userId');
