@@ -18,6 +18,20 @@ service cloud.firestore {
     match /users/{userId} {
       allow read, write: if isOwner(userId);
 
+      // Explicitly allow subcollections to ensure listing (querying) works correctly
+      match /watchlist/{movieId} {
+        allow read, write: if isOwner(userId);
+      }
+      
+      match /sceneMemories/{memoryId} {
+        allow read, write: if isOwner(userId);
+      }
+      
+      match /notifications/{notifId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // Recursive catch-all for any other nested data under a user
       match /{allPaths=**} {
         allow read, write: if isOwner(userId);
       }

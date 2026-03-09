@@ -132,14 +132,6 @@
     "/watchParties/{partyId}": {
       "schema": { "$ref": "#/backend/entities/WatchParty" },
       "description": "Collaborative watch party rooms."
-    },
-    "/watchParties/{partyId}/members/{memberId}": {
-      "schema": { "type": "object" },
-      "description": "Members joined in the watch party."
-    },
-    "/watchParties/{partyId}/nominations/{nomId}": {
-      "schema": { "type": "object" },
-      "description": "Movies nominated for voting in the party."
     }
   }
 }

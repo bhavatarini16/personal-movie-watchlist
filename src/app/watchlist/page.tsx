@@ -62,10 +62,13 @@ export default function WatchlistPage() {
     );
   }
 
-  const watchlist = entries?.filter(e => e.movieData && !e.isWatched && new Date(e.movieData.releaseDate) <= new Date()) || [];
-  const watched = entries?.filter(e => e.isWatched) || [];
-  const upcoming = entries?.filter(e => e.movieData && !e.isWatched && new Date(e.movieData.releaseDate) > new Date()) || [];
-  const favorites = entries?.filter(e => e.isFavorite) || [];
+  // Safety filter to ensure we only render entries that have complete movieData
+  const validEntries = entries?.filter(e => e.movieData) || [];
+  
+  const watchlist = validEntries.filter(e => !e.isWatched && new Date(e.movieData.releaseDate) <= new Date());
+  const watched = validEntries.filter(e => e.isWatched);
+  const upcoming = validEntries.filter(e => new Date(e.movieData.releaseDate) > new Date());
+  const favorites = validEntries.filter(e => e.isFavorite);
 
   return (
     <div className="pt-24 min-h-screen max-w-7xl mx-auto px-4 md:px-8 pb-16 space-y-12">
