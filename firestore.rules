@@ -15,11 +15,10 @@ service cloud.firestore {
     // --- Rules ---
 
     // Users have absolute authority over their own profile and all nested sub-data
+    // Using a recursive wildcard to ensure all subcollections are explicitly covered
     match /users/{userId} {
       allow read, write: if isOwner(userId);
       
-      // Recursive wildcard ensures all subcollections (watchlist, sceneMemories, notifications)
-      // are covered by the same ownership check, enabling collection listing.
       match /{allPaths=**} {
         allow read, write: if isOwner(userId);
       }

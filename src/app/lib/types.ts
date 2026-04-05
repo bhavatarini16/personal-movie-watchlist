@@ -34,6 +34,13 @@ export interface CinemaPersonality {
   description: string;
 }
 
+export interface GamificationStats {
+  streak: number;
+  lastWatchDate: string | null;
+  badges: string[];
+  totalWatched: number;
+}
+
 export interface UserProfile {
   id: string;
   username: string;
@@ -42,7 +49,8 @@ export interface UserProfile {
   dateJoined: string;
   personality?: CinemaPersonality;
   favoriteGenreIds?: string[];
-  friends?: Record<string, boolean>; // Denormalized friends map for auth
+  friends?: Record<string, boolean>;
+  gamification?: GamificationStats;
 }
 
 export interface Comment {
@@ -78,24 +86,6 @@ export interface WatchParty {
   selectedMovieId?: string;
   selectedMovieTitle?: string;
   selectedMoviePoster?: string;
-}
-
-export interface WatchPartyNomination {
-  id: string;
-  movieId: string;
-  movieTitle: string;
-  posterUrl: string;
-  nominatorId: string;
-  nominatorName: string;
-  votes: Record<string, boolean>; // userId -> true
-}
-
-export interface WatchPartyMember {
-  id: string;
-  userId: string;
-  username: string;
-  avatarUrl: string;
-  joinedAt: string;
 }
 
 export interface Notification {

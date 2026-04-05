@@ -4,7 +4,7 @@
     "UserProfile": {
       "title": "UserProfile",
       "type": "object",
-      "description": "Descriptive user profile with cinema identity and preferences.",
+      "description": "Descriptive user profile with cinema identity and gamification stats.",
       "properties": {
         "id": { "type": "string" },
         "email": { "type": "string", "format": "email" },
@@ -19,7 +19,15 @@
           }
         },
         "favoriteGenreIds": { "type": "array", "items": { "type": "string" } },
-        "friends": { "type": "object" }
+        "gamification": {
+          "type": "object",
+          "properties": {
+            "streak": { "type": "number" },
+            "lastWatchDate": { "type": "string", "format": "date-time" },
+            "badges": { "type": "array", "items": { "type": "string" } },
+            "totalWatched": { "type": "number" }
+          }
+        }
       },
       "required": ["id", "email", "username"]
     },
@@ -56,56 +64,6 @@
         "remindMe": { "type": "boolean" }
       },
       "required": ["userId", "movieId", "isWatched", "movieData"]
-    },
-    "SceneMemory": {
-      "title": "SceneMemory",
-      "type": "object",
-      "description": "A specific cinematic moment with movie titles and posters for context.",
-      "properties": {
-        "id": { "type": "string" },
-        "userId": { "type": "string" },
-        "movieId": { "type": "string" },
-        "movieTitle": { "type": "string" },
-        "posterUrl": { "type": "string" },
-        "timestamp": { "type": "string" },
-        "quote": { "type": "string" },
-        "note": { "type": "string" },
-        "addedDate": { "type": "string", "format": "date-time" }
-      },
-      "required": ["userId", "movieId", "timestamp", "movieTitle"]
-    },
-    "Comment": {
-      "title": "Comment",
-      "type": "object",
-      "description": "A user's comment on a movie, including their descriptive username.",
-      "properties": {
-        "id": { "type": "string" },
-        "userId": { "type": "string" },
-        "username": { "type": "string" },
-        "avatarUrl": { "type": "string" },
-        "watchlistEntryId": { "type": "string" },
-        "text": { "type": "string" },
-        "commentDate": { "type": "string", "format": "date-time" }
-      },
-      "required": ["userId", "username", "text", "commentDate"]
-    },
-    "WatchParty": {
-      "title": "WatchParty",
-      "type": "object",
-      "description": "A collaborative room for group movie experiences.",
-      "properties": {
-        "id": { "type": "string" },
-        "hostId": { "type": "string" },
-        "hostName": { "type": "string" },
-        "title": { "type": "string" },
-        "description": { "type": "string" },
-        "scheduledAt": { "type": "string", "format": "date-time" },
-        "status": { "type": "string", "enum": ["voting", "ready", "finished"] },
-        "selectedMovieId": { "type": "string" },
-        "selectedMovieTitle": { "type": "string" },
-        "selectedMoviePoster": { "type": "string" }
-      },
-      "required": ["id", "hostId", "title", "status", "scheduledAt"]
     }
   },
   "auth": {
@@ -119,22 +77,6 @@
     "/users/{userId}/watchlist/{movieId}": {
       "schema": { "$ref": "#/backend/entities/WatchlistEntry" },
       "description": "User's personal movie collection with original metadata."
-    },
-    "/users/{userId}/sceneMemories/{memoryId}": {
-      "schema": { "$ref": "#/backend/entities/SceneMemory" },
-      "description": "Captured cinematic moments with movie titles and posters."
-    },
-    "/users/{userId}/notifications/{notifId}": {
-      "schema": { "type": "object" },
-      "description": "Personal alerts and party invites."
-    },
-    "/comments/{commentId}": {
-       "schema": { "$ref": "#/backend/entities/Comment" },
-      "description": "Public movie discussions."
-    },
-    "/watchParties/{partyId}": {
-      "schema": { "$ref": "#/backend/entities/WatchParty" },
-      "description": "Collaborative watch party rooms."
     }
   }
 }
